@@ -7,11 +7,5 @@ namespace GraphiGrade.Tests.ComponentTests
         {
 
         }
-
-        [Fact]
-        public void Test2()
-        {
-
-        }
     }
 }
