@@ -1,6 +1,7 @@
 using GraphiGrade.Configuration;
 using GraphiGrade.Data;
 using GraphiGrade.Extensions;
+using GraphiGrade.Logger;
 using GraphiGrade.Models.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,7 +10,9 @@ var builder = WebApplication.CreateBuilder(args);
 // Read configuration from appsettings.
 var configurationBuilder = new ConfigurationBuilder()
     .SetBasePath(builder.Environment.ContentRootPath)
-    .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: false, reloadOnChange: false);
+    .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: false, reloadOnChange: false)
+    .AddEnvironmentVariables()
+    .AddUserSecrets<Program>();
 
 var configuration = configurationBuilder.Build();
 
@@ -35,7 +38,17 @@ builder.Services.AddGraphiGradeServices();
 
 builder.Services.AddRazorPages();
 
+LogUtils.PrintStartInfo(builder);
+
 var app = builder.Build();
+
+// Automatically apply migrations for Production before startup.
+if (builder.Environment.IsProduction())
+{
+    Console.WriteLine("[STARTUP] Applying Production migrations to DB...");
+    app.ApplyMigrations();
+    Console.WriteLine("[STARTUP] Migrations applied!");
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
