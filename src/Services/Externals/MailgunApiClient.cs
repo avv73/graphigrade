@@ -19,13 +19,13 @@ public class MailgunApiClient : IMailgunApiClient
     private const string ServiceName = nameof(MailgunApiClient);
 
     public MailgunApiClient(
-        IOptions<GraphiGradeConfig> graphiGradeConfig, 
-        IHttpClientFactory httpClientFactory,
-        ILogger<MailgunApiClient> logger)
+        IOptions<GraphiGradeConfig>? graphiGradeConfig, 
+        IHttpClientFactory? httpClientFactory,
+        ILogger<MailgunApiClient>? logger)
     {
-        ArgumentNullException.ThrowIfNull(_mailgunConfig = graphiGradeConfig.Value.MailgunConfig);
-        ArgumentNullException.ThrowIfNull(_httpClientFactory = httpClientFactory);
-        ArgumentNullException.ThrowIfNull(_logger = logger);
+        ArgumentNullException.ThrowIfNull(_mailgunConfig = graphiGradeConfig?.Value.MailgunConfig!);
+        ArgumentNullException.ThrowIfNull(_httpClientFactory = httpClientFactory!);
+        ArgumentNullException.ThrowIfNull(_logger = logger!);
     }
 
     public async Task<bool> SendMailAsync(string senderEmail, string recipientEmail, string subject, string textContent)
