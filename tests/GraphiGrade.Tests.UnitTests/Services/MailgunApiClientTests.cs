@@ -129,7 +129,7 @@ public class MailgunApiClientTests
         var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
 
         mockHttpMessageHandler
-            .Protected() // Access the protected SendAsync method
+            .Protected() 
             .Setup<Task<HttpResponseMessage>>(
                 "SendAsync",
                 ItExpr.IsAny<HttpRequestMessage>(),
@@ -143,7 +143,7 @@ public class MailgunApiClientTests
 
         var mockHttpClient = new HttpClient(mockHttpMessageHandler.Object)
         {
-            BaseAddress = new Uri("https://example.com/") // Optional: Set a base address
+            BaseAddress = new Uri("https://example.com/")
         };
 
         _httpClientFactoryMock
