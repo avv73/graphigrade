@@ -5,13 +5,13 @@ namespace GraphiGrade.Configuration;
 public class GraphiGradeConfig : IValidatableObject
 {
     [Required]
-    public string DbConnectionString { get; set; }
+    public string DbConnectionString { get; set; } = null!;
 
     [Required]
-    public MailgunConfig MailgunConfig { get; set; }
+    public MailgunConfig MailgunConfig { get; set; } = null!;
 
     [Required]
-    public RecaptchaConfig RecaptchaConfig { get; set; }
+    public RecaptchaConfig RecaptchaConfig { get; set; } = null!;
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
