@@ -28,7 +28,7 @@ public class MailgunApiClient : IMailgunApiClient
         ArgumentNullException.ThrowIfNull(_logger = logger!);
     }
 
-    public async Task<bool> SendMailAsync(string senderEmail, string recipientEmail, string subject, string textContent)
+    public async Task<bool> SendMailAsync(string senderEmail, string recipientEmail, string subject, string textContent, string htmlContent)
     {
         using var httpClient = _httpClientFactory.CreateClient();
 
@@ -43,7 +43,8 @@ public class MailgunApiClient : IMailgunApiClient
             { new StringContent(senderEmail), "from" },
             { new StringContent(recipientEmail), "to" },
             { new StringContent(subject), "subject" },
-            { new StringContent(textContent), "text" }
+            { new StringContent(textContent), "text" },
+            { new StringContent(htmlContent), "html"}
         };
 
         var response = await httpClient.PostAsync(mailgunBaseUrl, formData);
@@ -66,7 +67,7 @@ public class MailgunApiClient : IMailgunApiClient
             DateTime.UtcNow, 
             ServiceName, 
             nameof(SendMailAsync), 
-            $"Successfully sent email from {senderEmail} to {recipientEmail}. Subject: {subject} Content: {textContent}");
+            $"Successfully sent email from {senderEmail} to {recipientEmail}. Subject: {subject} Text Content: {textContent} Html Content: {htmlContent}");
 
         return true;
     }
