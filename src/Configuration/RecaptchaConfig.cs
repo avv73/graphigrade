@@ -4,9 +4,11 @@ namespace GraphiGrade.Configuration;
 
 public class RecaptchaConfig : IValidatableObject
 {
-    public string SiteKey { get; set; }
+    [Required]
+    public string SiteKey { get; set; } = null!;
 
-    public string SecretKey { get; set; }
+    [Required]
+    public string SecretKey { get; set; } = null!;
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {

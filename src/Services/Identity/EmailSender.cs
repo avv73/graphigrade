@@ -14,10 +14,10 @@ public class EmailSender : IEmailSender
 
     private const string ServiceName = nameof(ServiceName);
 
-    public EmailSender(ILogger<EmailSender> logger, IMailgunApiClient mailgunApiClient)
+    public EmailSender(ILogger<EmailSender>? logger, IMailgunApiClient? mailgunApiClient)
     {
-        ArgumentNullException.ThrowIfNull(_logger = logger);
-        ArgumentNullException.ThrowIfNull(_mailgunApiClient = mailgunApiClient);
+        ArgumentNullException.ThrowIfNull(_logger = logger!);
+        ArgumentNullException.ThrowIfNull(_mailgunApiClient = mailgunApiClient!);
     }
 
     public async Task SendEmailAsync(string email, string subject, string htmlMessage)
