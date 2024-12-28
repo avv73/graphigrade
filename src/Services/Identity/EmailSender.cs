@@ -23,14 +23,12 @@ public class EmailSender : IEmailSender
     public async Task SendEmailAsync(string email, string subject, string htmlMessage)
     {
         _logger.LogGeneralDebug(DateTime.UtcNow, ServiceName, nameof(SendEmailAsync), $"Send Email Call received! - {email} {subject} {htmlMessage}");
-
-        htmlMessage = $"<html>{htmlMessage}</html>";
-
+        
         bool result = await _mailgunApiClient.SendMailAsync(
             SenderEmail, 
             email, 
             subject,
-            textContent: string.Empty,
+            textContent:string.Empty,
             htmlContent:htmlMessage);
 
         _logger.LogGeneralDebug(DateTime.UtcNow, ServiceName, nameof(SendEmailAsync), $"Send Email Call Result: {result}");
