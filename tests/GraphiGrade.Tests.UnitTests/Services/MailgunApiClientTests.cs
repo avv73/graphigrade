@@ -26,6 +26,8 @@ public class MailgunApiClientTests
 
     private const string TextContentTest = "Text Content";
 
+    private const string HtmlContentTest = "Html Content";
+
     public MailgunApiClientTests()
     {
         _httpClientFactoryMock = new Mock<IHttpClientFactory>();
@@ -93,7 +95,7 @@ public class MailgunApiClientTests
 
         // Act
         bool result =
-            await _mailgunApiClient.SendMailAsync(SenderEmailTest, RecipientEmailTest, SubjectTest, TextContentTest);
+            await _mailgunApiClient.SendMailAsync(SenderEmailTest, RecipientEmailTest, SubjectTest, TextContentTest, HtmlContentTest);
 
         // Assert
         result.Should().BeTrue();
@@ -111,7 +113,7 @@ public class MailgunApiClientTests
 
         // Act
         bool result =
-            await _mailgunApiClient.SendMailAsync(SenderEmailTest, RecipientEmailTest, SubjectTest, TextContentTest);
+            await _mailgunApiClient.SendMailAsync(SenderEmailTest, RecipientEmailTest, SubjectTest, TextContentTest, HtmlContentTest);
 
         // Assert
         result.Should().BeFalse();

@@ -132,8 +132,8 @@ namespace GraphiGrade.Areas.Identity.Pages.Account
                         values: new { area = "Identity", userId = userId, code = code, returnUrl = returnUrl },
                         protocol: Request.Scheme);
 
-                    await _emailSender.SendEmailAsync(Input.Email, "Confirm your email",
-                        $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
+                    await _emailSender.SendEmailAsync(Input.Email, "GraphiGrade - Confirm your email",
+                        $"Thank you for registering on GraphiGrade!<br>Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.<br>If you did not register an account in our site, you can safely ignore this email.");
 
                     if (_userManager.Options.SignIn.RequireConfirmedAccount)
                     {
