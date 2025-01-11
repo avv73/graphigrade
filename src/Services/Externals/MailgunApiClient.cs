@@ -38,37 +38,51 @@ public class MailgunApiClient : IMailgunApiClient
         var authValue = Convert.ToBase64String(Encoding.UTF8.GetBytes($"api:{mailgunApiKey}"));
         httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", authValue);
 
-        var formData = new MultipartFormDataContent
+        try
         {
-            { new StringContent(senderEmail), "from" },
-            { new StringContent(recipientEmail), "to" },
-            { new StringContent(subject), "subject" },
-            { new StringContent(textContent), "text" },
-            { new StringContent(htmlContent), "html"}
-        };
+            var formData = new MultipartFormDataContent
+            {
+                { new StringContent(senderEmail), "from" },
+                { new StringContent(recipientEmail), "to" },
+                { new StringContent(subject), "subject" },
+                { new StringContent(textContent), "text" },
+                { new StringContent(htmlContent), "html"}
+            };
 
-        var response = await httpClient.PostAsync(mailgunBaseUrl, formData);
+            var response = await httpClient.PostAsync(mailgunBaseUrl, formData);
 
-        var responseAsString = await response.Content.ReadAsStringAsync();
+            string responseAsString = await response.Content.ReadAsStringAsync();
 
-        if (!response.IsSuccessStatusCode)
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogExternalApiError(
+                    DateTime.UtcNow,
+                    ServiceName,
+                    nameof(SendMailAsync),
+                    string.Join(Environment.NewLine, await formData.ToDictionaryAsync()),
+                    responseAsString);
+
+                return false;
+            }
+
+            _logger.LogGeneralInformation(
+                DateTime.UtcNow,
+                ServiceName,
+                nameof(SendMailAsync),
+                $"Successfully sent email from {senderEmail} to {recipientEmail}. Subject: {subject} Text Content: {textContent} Html Content: {htmlContent}");
+
+            return true;
+        }
+        catch (Exception ex)
         {
-            _logger.LogExternalApiError(
+            _logger.LogServiceException(
                 DateTime.UtcNow, 
-                ServiceName, 
-                nameof(SendMailAsync), 
-                string.Join(Environment.NewLine, await formData.ToDictionaryAsync()),
-                responseAsString);
+                ServiceName,
+                nameof(SendMailAsync),
+                ex.Message,
+                ex);
 
             return false;
         }
-
-        _logger.LogGeneralInformation(
-            DateTime.UtcNow, 
-            ServiceName, 
-            nameof(SendMailAsync), 
-            $"Successfully sent email from {senderEmail} to {recipientEmail}. Subject: {subject} Text Content: {textContent} Html Content: {htmlContent}");
-
-        return true;
     }
 }
