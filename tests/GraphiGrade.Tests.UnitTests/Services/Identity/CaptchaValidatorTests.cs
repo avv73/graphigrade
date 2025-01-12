@@ -95,7 +95,7 @@ public class CaptchaValidatorTests
 
         _recaptchaApiClientMock
             .Setup(x => x.AssessRecaptchaAsync(It.IsAny<RecaptchaRequestDto>()))
-            .ReturnsAsync((RecaptchaResponseDto)null);
+            .ReturnsAsync((RecaptchaResponseDto)null!);
 
         // Act
         var result = await _captchaValidator.ValidateCaptchaAsync(TestToken, TestUserAgent, TestUserIp, TestUserAction);

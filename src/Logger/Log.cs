@@ -41,14 +41,14 @@ public static partial class Log
     [LoggerMessage(
         Level = LogLevel.Error,
         EventId = 3002,
-        Message = "{Timestamp} | {ServiceName} | {MethodName} | {Message} | {Exception}")]
+        Message = "{Timestamp} | {ServiceName} | {MethodName} | {Message}")]
     public static partial void LogServiceException(
         this ILogger logger,
         DateTime timestamp,
         string serviceName,
         string methodName,
         string message,
-        Exception exception);
+        Exception ex);
 
     // 4000 - Critical
 
