@@ -12,7 +12,7 @@ public class GraphiGradeConfig : IValidatableObject
 
     [Required]
     public RecaptchaConfig RecaptchaConfig { get; set; } = null!;
-
+    
     [Required]
     public MicrosoftSsoConfig MicrosoftSsoConfig { get; set; } = null!;
 
