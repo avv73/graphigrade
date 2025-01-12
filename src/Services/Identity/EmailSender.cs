@@ -28,8 +28,8 @@ public class EmailSender : IEmailSender
             SenderEmail, 
             email, 
             subject,
-            textContent:string.Empty,
-            htmlContent:htmlMessage);
+            textContent: string.Empty,
+            htmlContent: htmlMessage);
 
         _logger.LogGeneralDebug(DateTime.UtcNow, ServiceName, nameof(SendEmailAsync), $"Send Email Call Result: {result}");
     }

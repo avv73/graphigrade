@@ -4,23 +4,21 @@ namespace GraphiGrade.Configuration;
 
 public class RecaptchaConfig : IValidatableObject
 {
-    [Required]
     public string SiteKey { get; set; } = null!;
 
-    [Required]
     public string SecretKey { get; set; } = null!;
 
-    [Required]
     public string GoogleApiKey { get; set; } = null!;
 
-    [Required]
     public string RecaptchaAssessUrl { get; set; } = null!;
 
-    [Required] 
     public string RecaptchaRegisterActionName { get; set; } = null!;
 
-    [Required]
     public string RecaptchaLoginActionName { get; set; } = null!;
+
+    public string RecaptchaResendEmailConfirmationActionName { get; set; } = null!;
+
+    public string RecaptchaResetPasswordActionName { get; set; } = null!;
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
@@ -46,12 +44,22 @@ public class RecaptchaConfig : IValidatableObject
 
         if (string.IsNullOrWhiteSpace(RecaptchaRegisterActionName))
         {
-            yield return new ValidationResult($"'{nameof(RecaptchaAssessUrl)}' is missing from configuration!");
+            yield return new ValidationResult($"'{nameof(RecaptchaRegisterActionName)}' is missing from configuration!");
         }
 
         if (string.IsNullOrWhiteSpace(RecaptchaLoginActionName))
         {
-            yield return new ValidationResult($"'{nameof(RecaptchaAssessUrl)}' is missing from configuration!");
+            yield return new ValidationResult($"'{nameof(RecaptchaLoginActionName)}' is missing from configuration!");
+        }
+
+        if (string.IsNullOrWhiteSpace(RecaptchaResendEmailConfirmationActionName))
+        {
+            yield return new ValidationResult($"'{nameof(RecaptchaResendEmailConfirmationActionName)}' is missing from configuration!");
+        }
+
+        if (string.IsNullOrWhiteSpace(RecaptchaResetPasswordActionName))
+        {
+            yield return new ValidationResult($"'{nameof(RecaptchaResetPasswordActionName)}' is missing from configuration!");
         }
     }
 }

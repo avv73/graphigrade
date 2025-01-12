@@ -16,11 +16,26 @@
                 <label asp-for="Input.Email" class="form-label"></label>
                 <span asp-validation-for="Input.Email" class="text-danger"></span>
             </div>
-            <button type="submit" class="w-100 btn btn-lg btn-primary">Resend</button>
+            <div class="g-recaptcha" data-sitekey="@Model.RecaptchaSiteKey" data-action="@Model.RecaptchaResendEmailConfirmation" data-callback="reCaptchaResponse"></div>
+            <input asp-for="Input.RecaptchaToken" hidden="true" id="recaptchaToken" />
+            <button type="submit" class="w-100 btn btn-lg btn-primary" id="resendSubmit">Resend</button>
         </form>
     </div>
 </div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script src="https://www.google.com/recaptcha/enterprise.js" async defer></script>
+    <script>
+        $(document).ready(function () {
+            resendSubmit.disabled = true;
+        });
+
+        var resendSubmit = document.getElementById("resendSubmit");
+
+        function reCaptchaResponse(token) {
+            $('#recaptchaToken').val(token);
+            resendSubmit.disabled = false;
+        }
+    </script>
 }
