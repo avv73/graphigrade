@@ -7,14 +7,18 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
+using GraphiGrade.Configuration;
 using Microsoft.AspNetCore.Authorization;
 using GraphiGrade.Models.Identity;
+using GraphiGrade.Services.Identity.Abstractions;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using GraphiGrade.Extensions;
 
 namespace GraphiGrade.Areas.Identity.Pages.Account
 {
@@ -22,11 +26,19 @@ namespace GraphiGrade.Areas.Identity.Pages.Account
     {
         private readonly SignInManager<User> _signInManager;
         private readonly ILogger<LoginModel> _logger;
+        private readonly RecaptchaConfig _recaptchaConfig;
+        private readonly ICaptchaValidator _captchaValidator;
 
-        public LoginModel(SignInManager<User> signInManager, ILogger<LoginModel> logger)
+        public LoginModel(
+            SignInManager<User> signInManager, 
+            ILogger<LoginModel> logger,
+            IOptions<GraphiGradeConfig> configuration,
+            ICaptchaValidator captchaValidator)
         {
             _signInManager = signInManager;
             _logger = logger;
+            _recaptchaConfig = configuration.Value.RecaptchaConfig;
+            _captchaValidator = captchaValidator;
         }
 
         /// <summary>
@@ -56,6 +68,17 @@ namespace GraphiGrade.Areas.Identity.Pages.Account
         public string ErrorMessage { get; set; }
 
         /// <summary>
+        /// Exposes the Recaptcha site key to the frontend.
+        /// </summary>
+        public string RecaptchaSiteKey => _recaptchaConfig.SiteKey;
+
+
+        /// <summary>
+        /// Exposes the Recaptcha login action name to the frontend.
+        /// </summary>
+        public string RecaptchaLoginActionName => _recaptchaConfig.RecaptchaLoginActionName;
+
+        /// <summary>
         ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
         ///     directly from your code. This API may change or be removed in future releases.
         /// </summary>
@@ -83,6 +106,12 @@ namespace GraphiGrade.Areas.Identity.Pages.Account
             /// </summary>
             [Display(Name = "Remember me?")]
             public bool RememberMe { get; set; }
+
+            /// <summary>
+            /// Token to validate reCaptcha against.
+            /// </summary>
+            [Required]
+            public string RecaptchaToken { get; set; }
         }
 
         public async Task OnGetAsync(string returnUrl = null)
@@ -110,6 +139,19 @@ namespace GraphiGrade.Areas.Identity.Pages.Account
 
             if (ModelState.IsValid)
             {
+                // Validate reCaptcha.
+                var captchaValidationResult = await _captchaValidator.ValidateCaptchaAsync(
+                    Input.RecaptchaToken,
+                    HttpContext.Request.GetUserAgent() ?? string.Empty,
+                    HttpContext.Request.GetUserIp() ?? string.Empty,
+                    _recaptchaConfig.RecaptchaLoginActionName);
+
+                if (captchaValidationResult != ValidationResult.Success)
+                {
+                    ModelState.AddModelError(string.Empty, "A Recaptcha error occurred.");
+                    return Page();
+                }
+
                 // This doesn't count login failures towards account lockout
                 // To enable password failures to trigger account lockout, set lockoutOnFailure: true
                 var result = await _signInManager.PasswordSignInAsync(Input.Email, Input.Password, Input.RememberMe, lockoutOnFailure: false);

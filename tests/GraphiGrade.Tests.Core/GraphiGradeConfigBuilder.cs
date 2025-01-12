@@ -14,12 +14,18 @@ public static class GraphiGradeConfigBuilder
 
     private const string RecaptchaSecretKey = "recaptcha-secret-key";
 
+    private const string GoogleApiKey = "google-test-key";
+
+    private const string RecaptchaAssessUrl = "https://test.com/?key={0}";
+
     public static GraphiGradeConfig BuildConfig(
         string dbConnectionString = DbConnectionString, 
         string mailgunApiKey = MailgunApiKey,
         string mailgunEndpointUrl = MailgunEndpointUrl,
         string recaptchaSiteKey = RecaptchaSiteKey,
-        string recaptchaSecretKey = RecaptchaSecretKey)
+        string recaptchaSecretKey = RecaptchaSecretKey,
+        string googleApiKey = GoogleApiKey,
+        string recaptchaAssessUrl = RecaptchaAssessUrl)
     {
         return new GraphiGradeConfig
         {
@@ -32,7 +38,9 @@ public static class GraphiGradeConfigBuilder
             RecaptchaConfig = new RecaptchaConfig
             {
                 SiteKey = recaptchaSiteKey,
-                SecretKey = recaptchaSecretKey
+                SecretKey = recaptchaSecretKey,
+                GoogleApiKey = googleApiKey,
+                RecaptchaAssessUrl = recaptchaAssessUrl
             }
         };
     }

@@ -7,8 +7,9 @@ using Moq;
 using Moq.Protected;
 using System.Net;
 using FluentAssertions;
+using GraphiGrade.Tests.Core.Extensions;
 
-namespace GraphiGrade.Tests.UnitTests.Services;
+namespace GraphiGrade.Tests.UnitTests.Services.Externals;
 
 public class MailgunApiClientTests
 {
@@ -81,7 +82,7 @@ public class MailgunApiClientTests
             new MailgunApiClient(config, _httpClientFactoryMock.Object, _loggerMock.Object));
 
         // Assert
-        Assert.Null(exception);
+        exception.Should().BeNull();
     }
 
     #endregion
@@ -91,7 +92,7 @@ public class MailgunApiClientTests
     public async Task SendMailAsync_SuccessfulResponse_ReturnsTrue()
     {
         // Arrange
-        MockHttpResponse("{\"id\": \"100\", \"status\": \"Successful\"}", HttpStatusCode.OK);
+        _httpClientFactoryMock.SetupHttpResponse("{\"id\": \"100\", \"status\": \"Successful\"}", HttpStatusCode.OK);
 
         // Act
         bool result =
@@ -109,7 +110,7 @@ public class MailgunApiClientTests
     public async Task SendMailAsync_UnsuccessfulResponse_ReturnsFalse(HttpStatusCode statusCode)
     {
         // Arrange
-        MockHttpResponse("Error occurred", statusCode);
+        _httpClientFactoryMock.SetupHttpResponse("Error occurred", statusCode);
 
         // Act
         bool result =
@@ -121,35 +122,8 @@ public class MailgunApiClientTests
 
     #endregion
 
-    private IOptions<GraphiGradeConfig> MockConfig()
+    private static IOptions<GraphiGradeConfig> MockConfig()
     {
         return Options.Create(GraphiGradeConfigBuilder.BuildConfig());
-    }
-
-    private void MockHttpResponse(string response, HttpStatusCode responseCode)
-    {
-        var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
-
-        mockHttpMessageHandler
-            .Protected() 
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>()
-            )
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = responseCode,
-                Content = new StringContent(response),
-            });
-
-        var mockHttpClient = new HttpClient(mockHttpMessageHandler.Object)
-        {
-            BaseAddress = new Uri("https://example.com/")
-        };
-
-        _httpClientFactoryMock
-            .Setup(factory => factory.CreateClient(It.IsAny<string>()))
-            .Returns(mockHttpClient);
     }
 }
