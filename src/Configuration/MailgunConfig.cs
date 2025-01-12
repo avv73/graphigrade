@@ -4,9 +4,11 @@ namespace GraphiGrade.Configuration;
 
 public class MailgunConfig : IValidatableObject
 {
-    public string MailgunApiKey { get; set; }
+    [Required]
+    public string MailgunApiKey { get; set; } = null!;
 
-    public string MailgunEndpointUrl { get; set; }
+    [Required]
+    public string MailgunEndpointUrl { get; set; } = null!;
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {

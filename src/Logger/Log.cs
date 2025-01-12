@@ -13,12 +13,23 @@ public static partial class Log
         string methodName,
         string message);
 
-    // 200 - Warning
+    // 2000 - Warning
+
+    [LoggerMessage(
+        Level = LogLevel.Warning,
+        EventId = 2000,
+        Message = "{Timestamp} | {ServiceName} | {MethodName} | {Message}")]
+    public static partial void LogGeneralWarning(
+        this ILogger logger,
+        DateTime timestamp,
+        string serviceName,
+        string methodName,
+        string message);
 
     [LoggerMessage(
         Level = LogLevel.Error,
         EventId = 3001,
-        Message = "{Timestamp} | {ServiceName} | {MethodName} | Request: {Request} | Response: {Response}")]
+        Message = "{Timestamp} | {ServiceName} | {MethodName} | {Request} | {Response}")]
     public static partial void LogExternalApiError(
         this ILogger logger,
         DateTime timestamp,
@@ -27,9 +38,21 @@ public static partial class Log
         string request,
         string response);
 
-    // 400 - Critical
+    [LoggerMessage(
+        Level = LogLevel.Error,
+        EventId = 3002,
+        Message = "{Timestamp} | {ServiceName} | {MethodName} | {Message}")]
+    public static partial void LogServiceException(
+        this ILogger logger,
+        DateTime timestamp,
+        string serviceName,
+        string methodName,
+        string message,
+        Exception ex);
 
-    // 500 - Debug
+    // 4000 - Critical
+
+    // 5000 - Debug
     [LoggerMessage(
         Level = LogLevel.Debug,
         EventId = 5000,

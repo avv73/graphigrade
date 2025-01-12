@@ -7,13 +7,17 @@ using System.ComponentModel.DataAnnotations;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
+using GraphiGrade.Configuration;
 using Microsoft.AspNetCore.Authorization;
 using GraphiGrade.Models.Identity;
+using GraphiGrade.Services.Identity.Abstractions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.Extensions.Options;
+using GraphiGrade.Extensions;
 
 namespace GraphiGrade.Areas.Identity.Pages.Account
 {
@@ -22,11 +26,19 @@ namespace GraphiGrade.Areas.Identity.Pages.Account
     {
         private readonly UserManager<User> _userManager;
         private readonly IEmailSender _emailSender;
+        private readonly RecaptchaConfig _recaptchaConfig;
+        private readonly ICaptchaValidator _captchaValidator;
 
-        public ResendEmailConfirmationModel(UserManager<User> userManager, IEmailSender emailSender)
+        public ResendEmailConfirmationModel(
+            UserManager<User> userManager, 
+            IEmailSender emailSender,
+            IOptions<GraphiGradeConfig> configuration,
+            ICaptchaValidator captchaValidator)
         {
             _userManager = userManager;
             _emailSender = emailSender;
+            _recaptchaConfig = configuration.Value.RecaptchaConfig;
+            _captchaValidator = captchaValidator;
         }
 
         /// <summary>
@@ -35,6 +47,16 @@ namespace GraphiGrade.Areas.Identity.Pages.Account
         /// </summary>
         [BindProperty]
         public InputModel Input { get; set; }
+
+        /// <summary>
+        /// Exposes the Recaptcha site key to the frontend.
+        /// </summary>
+        public string RecaptchaSiteKey => _recaptchaConfig.SiteKey;
+
+        /// <summary>
+        /// Exposes the Recaptcha resend email confirmation action name to the frontend.
+        /// </summary>
+        public string RecaptchaResendEmailConfirmation => _recaptchaConfig.RecaptchaResendEmailConfirmationActionName;
 
         /// <summary>
         ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
@@ -49,6 +71,12 @@ namespace GraphiGrade.Areas.Identity.Pages.Account
             [Required]
             [EmailAddress]
             public string Email { get; set; }
+
+            /// <summary>
+            /// Token to validate reCaptcha against.
+            /// </summary>
+            [Required]
+            public string RecaptchaToken { get; set; }
         }
 
         public void OnGet()
@@ -62,10 +90,29 @@ namespace GraphiGrade.Areas.Identity.Pages.Account
                 return Page();
             }
 
+            // Validate reCaptcha.
+            var captchaValidationResult = await _captchaValidator.ValidateCaptchaAsync(
+                Input.RecaptchaToken,
+                HttpContext.Request.GetUserAgent() ?? string.Empty,
+                HttpContext.Request.GetUserIp() ?? string.Empty,
+                _recaptchaConfig.RecaptchaResendEmailConfirmationActionName);
+
+            if (captchaValidationResult != ValidationResult.Success)
+            {
+                ModelState.AddModelError(string.Empty, "A Recaptcha error occurred.");
+                return Page();
+            }
+
             var user = await _userManager.FindByEmailAsync(Input.Email);
             if (user == null)
             {
-                ModelState.AddModelError(string.Empty, "Verification email sent. Please check your email.");
+                ModelState.AddModelError(string.Empty, "If an account with this address has been registered, you will receive a verification email in your inbox.");
+                return Page();
+            }
+
+            if (user.EmailConfirmed)
+            {
+                ModelState.AddModelError(string.Empty, "Your email is already confirmed.");
                 return Page();
             }
 
@@ -82,7 +129,7 @@ namespace GraphiGrade.Areas.Identity.Pages.Account
                 "Confirm your email",
                 $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
 
-            ModelState.AddModelError(string.Empty, "Verification email sent. Please check your email.");
+            ModelState.AddModelError(string.Empty, "If an account with this address has been registered, you will receive a verification email in your inbox.");
             return Page();
         }
     }

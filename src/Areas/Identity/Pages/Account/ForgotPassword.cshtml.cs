@@ -14,18 +14,30 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
+using GraphiGrade.Configuration;
+using GraphiGrade.Services.Identity.Abstractions;
+using Microsoft.Extensions.Options;
+using GraphiGrade.Extensions;
 
 namespace GraphiGrade.Areas.Identity.Pages.Account
 {
     public class ForgotPasswordModel : PageModel
     {
         private readonly UserManager<User> _userManager;
-        private readonly IEmailSender _emailSender;
+        private readonly IEmailSender _emailSender; 
+        private readonly RecaptchaConfig _recaptchaConfig;
+        private readonly ICaptchaValidator _captchaValidator;
 
-        public ForgotPasswordModel(UserManager<User> userManager, IEmailSender emailSender)
+        public ForgotPasswordModel(
+            UserManager<User> userManager, 
+            IEmailSender emailSender,
+            IOptions<GraphiGradeConfig> configuration,
+            ICaptchaValidator captchaValidator)
         {
             _userManager = userManager;
             _emailSender = emailSender;
+            _recaptchaConfig = configuration.Value.RecaptchaConfig;
+            _captchaValidator = captchaValidator;
         }
 
         /// <summary>
@@ -34,6 +46,16 @@ namespace GraphiGrade.Areas.Identity.Pages.Account
         /// </summary>
         [BindProperty]
         public InputModel Input { get; set; }
+
+        /// <summary>
+        /// Exposes the Recaptcha site key to the frontend.
+        /// </summary>
+        public string RecaptchaSiteKey => _recaptchaConfig.SiteKey;
+
+        /// <summary>
+        /// Exposes the Recaptcha forgot password action name to the frontend.
+        /// </summary>
+        public string RecaptchaResetPasswordActionName => _recaptchaConfig.RecaptchaResetPasswordActionName;
 
         /// <summary>
         ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
@@ -48,12 +70,31 @@ namespace GraphiGrade.Areas.Identity.Pages.Account
             [Required]
             [EmailAddress]
             public string Email { get; set; }
+
+            /// <summary>
+            /// Token to validate reCaptcha against.
+            /// </summary>
+            [Required]
+            public string RecaptchaToken { get; set; }
         }
 
         public async Task<IActionResult> OnPostAsync()
         {
             if (ModelState.IsValid)
             {
+                // Validate reCaptcha.
+                var captchaValidationResult = await _captchaValidator.ValidateCaptchaAsync(
+                    Input.RecaptchaToken,
+                    HttpContext.Request.GetUserAgent() ?? string.Empty,
+                    HttpContext.Request.GetUserIp() ?? string.Empty,
+                    _recaptchaConfig.RecaptchaResetPasswordActionName);
+
+                if (captchaValidationResult != ValidationResult.Success)
+                {
+                    ModelState.AddModelError(string.Empty, "A Recaptcha error occurred.");
+                    return Page();
+                }
+
                 var user = await _userManager.FindByEmailAsync(Input.Email);
                 if (user == null || !(await _userManager.IsEmailConfirmedAsync(user)))
                 {

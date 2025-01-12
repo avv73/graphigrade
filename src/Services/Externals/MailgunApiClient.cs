@@ -19,16 +19,16 @@ public class MailgunApiClient : IMailgunApiClient
     private const string ServiceName = nameof(MailgunApiClient);
 
     public MailgunApiClient(
-        IOptions<GraphiGradeConfig> graphiGradeConfig, 
-        IHttpClientFactory httpClientFactory,
-        ILogger<MailgunApiClient> logger)
+        IOptions<GraphiGradeConfig>? graphiGradeConfig, 
+        IHttpClientFactory? httpClientFactory,
+        ILogger<MailgunApiClient>? logger)
     {
-        ArgumentNullException.ThrowIfNull(_mailgunConfig = graphiGradeConfig.Value.MailgunConfig);
-        ArgumentNullException.ThrowIfNull(_httpClientFactory = httpClientFactory);
-        ArgumentNullException.ThrowIfNull(_logger = logger);
+        ArgumentNullException.ThrowIfNull(_mailgunConfig = graphiGradeConfig?.Value.MailgunConfig!);
+        ArgumentNullException.ThrowIfNull(_httpClientFactory = httpClientFactory!);
+        ArgumentNullException.ThrowIfNull(_logger = logger!);
     }
 
-    public async Task<bool> SendMailAsync(string senderEmail, string recipientEmail, string subject, string textContent)
+    public async Task<bool> SendMailAsync(string senderEmail, string recipientEmail, string subject, string textContent, string htmlContent)
     {
         using var httpClient = _httpClientFactory.CreateClient();
 
@@ -38,36 +38,51 @@ public class MailgunApiClient : IMailgunApiClient
         var authValue = Convert.ToBase64String(Encoding.UTF8.GetBytes($"api:{mailgunApiKey}"));
         httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", authValue);
 
-        var formData = new MultipartFormDataContent
+        try
         {
-            { new StringContent(senderEmail), "from" },
-            { new StringContent(recipientEmail), "to" },
-            { new StringContent(subject), "subject" },
-            { new StringContent(textContent), "text" }
-        };
+            var formData = new MultipartFormDataContent
+            {
+                { new StringContent(senderEmail), "from" },
+                { new StringContent(recipientEmail), "to" },
+                { new StringContent(subject), "subject" },
+                { new StringContent(textContent), "text" },
+                { new StringContent(htmlContent), "html"}
+            };
 
-        var response = await httpClient.PostAsync(mailgunBaseUrl, formData);
+            var response = await httpClient.PostAsync(mailgunBaseUrl, formData);
 
-        var responseAsString = await response.Content.ReadAsStringAsync();
+            string responseAsString = await response.Content.ReadAsStringAsync();
 
-        if (!response.IsSuccessStatusCode)
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogExternalApiError(
+                    DateTime.UtcNow,
+                    ServiceName,
+                    nameof(SendMailAsync),
+                    string.Join(Environment.NewLine, await formData.ToDictionaryAsync()),
+                    responseAsString);
+
+                return false;
+            }
+
+            _logger.LogGeneralInformation(
+                DateTime.UtcNow,
+                ServiceName,
+                nameof(SendMailAsync),
+                $"Successfully sent email from {senderEmail} to {recipientEmail}. Subject: {subject} Text Content: {textContent} Html Content: {htmlContent}");
+
+            return true;
+        }
+        catch (Exception ex)
         {
-            _logger.LogExternalApiError(
+            _logger.LogServiceException(
                 DateTime.UtcNow, 
-                ServiceName, 
-                nameof(SendMailAsync), 
-                string.Join(Environment.NewLine, await formData.ToDictionaryAsync()),
-                responseAsString);
+                ServiceName,
+                nameof(SendMailAsync),
+                ex.Message,
+                ex);
 
             return false;
         }
-
-        _logger.LogGeneralInformation(
-            DateTime.UtcNow, 
-            ServiceName, 
-            nameof(SendMailAsync), 
-            $"Successfully sent email from {senderEmail} to {recipientEmail}. Subject: {subject} Content: {textContent}");
-
-        return true;
     }
 }

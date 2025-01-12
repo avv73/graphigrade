@@ -14,17 +14,22 @@ public class EmailSender : IEmailSender
 
     private const string ServiceName = nameof(ServiceName);
 
-    public EmailSender(ILogger<EmailSender> logger, IMailgunApiClient mailgunApiClient)
+    public EmailSender(ILogger<EmailSender>? logger, IMailgunApiClient? mailgunApiClient)
     {
-        ArgumentNullException.ThrowIfNull(_logger = logger);
-        ArgumentNullException.ThrowIfNull(_mailgunApiClient = mailgunApiClient);
+        ArgumentNullException.ThrowIfNull(_logger = logger!);
+        ArgumentNullException.ThrowIfNull(_mailgunApiClient = mailgunApiClient!);
     }
 
     public async Task SendEmailAsync(string email, string subject, string htmlMessage)
     {
         _logger.LogGeneralDebug(DateTime.UtcNow, ServiceName, nameof(SendEmailAsync), $"Send Email Call received! - {email} {subject} {htmlMessage}");
-
-        bool result = await _mailgunApiClient.SendMailAsync(SenderEmail, email, subject, htmlMessage);
+        
+        bool result = await _mailgunApiClient.SendMailAsync(
+            SenderEmail, 
+            email, 
+            subject,
+            textContent: string.Empty,
+            htmlContent: htmlMessage);
 
         _logger.LogGeneralDebug(DateTime.UtcNow, ServiceName, nameof(SendEmailAsync), $"Send Email Call Result: {result}");
     }

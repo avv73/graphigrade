@@ -6,19 +6,24 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Threading;
 using System.Threading.Tasks;
+using GraphiGrade.Configuration;
+using GraphiGrade.Extensions;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using GraphiGrade.Models.Identity;
+using GraphiGrade.Services.Identity.Abstractions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace GraphiGrade.Areas.Identity.Pages.Account
 {
@@ -30,13 +35,17 @@ namespace GraphiGrade.Areas.Identity.Pages.Account
         private readonly IUserEmailStore<User> _emailStore;
         private readonly ILogger<RegisterModel> _logger;
         private readonly IEmailSender _emailSender;
+        private readonly RecaptchaConfig _recaptchaConfig;
+        private readonly ICaptchaValidator _captchaValidator;
 
         public RegisterModel(
             UserManager<User> userManager,
             IUserStore<User> userStore,
             SignInManager<User> signInManager,
             ILogger<RegisterModel> logger,
-            IEmailSender emailSender)
+            IEmailSender emailSender,
+            IOptions<GraphiGradeConfig> configuration,
+            ICaptchaValidator captchaValidator)
         {
             _userManager = userManager;
             _userStore = userStore;
@@ -44,6 +53,8 @@ namespace GraphiGrade.Areas.Identity.Pages.Account
             _signInManager = signInManager;
             _logger = logger;
             _emailSender = emailSender;
+            _recaptchaConfig = configuration.Value.RecaptchaConfig;
+            _captchaValidator = captchaValidator;
         }
 
         /// <summary>
@@ -65,6 +76,17 @@ namespace GraphiGrade.Areas.Identity.Pages.Account
         /// </summary>
         public IList<AuthenticationScheme> ExternalLogins { get; set; }
 
+        /// <summary>
+        /// Exposes the Recaptcha site key to the frontend.
+        /// </summary>
+        public string RecaptchaSiteKey => _recaptchaConfig.SiteKey;
+
+
+        /// <summary>
+        /// Exposes the Recaptcha register action name to the frontend.
+        /// </summary>
+        public string RecaptchaRegisterActionName => _recaptchaConfig.RecaptchaRegisterActionName;
+        
         /// <summary>
         ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
         ///     directly from your code. This API may change or be removed in future releases.
@@ -98,6 +120,12 @@ namespace GraphiGrade.Areas.Identity.Pages.Account
             [Display(Name = "Confirm password")]
             [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
             public string ConfirmPassword { get; set; }
+             
+            /// <summary>
+            /// Token to validate reCaptcha against.
+            /// </summary>
+            [Required]
+            public string RecaptchaToken { get; set; }
         }
 
 
@@ -113,6 +141,19 @@ namespace GraphiGrade.Areas.Identity.Pages.Account
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
             if (ModelState.IsValid)
             {
+                // Validate reCaptcha.
+                var captchaValidationResult = await _captchaValidator.ValidateCaptchaAsync(
+                    Input.RecaptchaToken,
+                    HttpContext.Request.GetUserAgent() ?? string.Empty,
+                    HttpContext.Request.GetUserIp() ?? string.Empty,
+                    _recaptchaConfig.RecaptchaRegisterActionName);
+                    
+                if (captchaValidationResult != ValidationResult.Success)
+                {
+                    ModelState.AddModelError(string.Empty, "A Recaptcha error occurred.");
+                    return Page();
+                }
+
                 var user = CreateUser();
 
                 await _userStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
@@ -132,8 +173,8 @@ namespace GraphiGrade.Areas.Identity.Pages.Account
                         values: new { area = "Identity", userId = userId, code = code, returnUrl = returnUrl },
                         protocol: Request.Scheme);
 
-                    await _emailSender.SendEmailAsync(Input.Email, "Confirm your email",
-                        $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
+                    await _emailSender.SendEmailAsync(Input.Email, "GraphiGrade - Confirm your email",
+                        $"Thank you for registering on GraphiGrade!<br>Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.<br>If you did not register an account on our site, you can safely ignore this email.");
 
                     if (_userManager.Options.SignIn.RequireConfirmedAccount)
                     {
