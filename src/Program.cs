@@ -22,17 +22,31 @@ builder.Services.AddOptions<GraphiGradeConfig>()
     .ValidateDataAnnotations()
     .ValidateOnStart();
 
-var connectionString = configuration.GetRequiredSection("GraphiGradeConfig:DbConnectionString").Value;
+// Read configuration from Options Pattern to setup services down the line.
+var optionsConfiguration = new GraphiGradeConfig();
+configuration.GetSection("GraphiGradeConfig").Bind(optionsConfiguration);
 
 // Setup Db context.
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(connectionString));
+    options.UseSqlServer(optionsConfiguration.DbConnectionString));
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 // Setup ASP.NET Core identity.
 builder.Services.AddDefaultIdentity<User>(options => options.SignIn.RequireConfirmedAccount = true)
     .AddEntityFrameworkStores<ApplicationDbContext>();
+
+// Setup Microsoft SSO.
+if (optionsConfiguration.MicrosoftSsoConfig.IsEnabled)
+{
+    builder.Services.AddAuthentication().AddMicrosoftAccount(microsoftOptions =>
+    {
+        microsoftOptions.ClientId = optionsConfiguration.MicrosoftSsoConfig.ClientId;
+        microsoftOptions.ClientSecret = optionsConfiguration.MicrosoftSsoConfig.ClientSecret;
+        microsoftOptions.AuthorizationEndpoint = optionsConfiguration.MicrosoftSsoConfig.AuthorizationEndpoint;
+        microsoftOptions.TokenEndpoint = optionsConfiguration.MicrosoftSsoConfig.TokenEndpoint;
+    });
+}
 
 builder.Services.AddGraphiGradeServices();
 
