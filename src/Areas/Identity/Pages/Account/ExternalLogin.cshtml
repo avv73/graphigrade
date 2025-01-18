@@ -23,6 +23,11 @@
                 <label asp-for="Input.Email" class="form-label"></label>
                 <span asp-validation-for="Input.Email" class="text-danger"></span>
             </div>
+            <div class="form-floating mb-3">
+                <input asp-for="Input.FacultyNumber" class="form-control" autocomplete="email" placeholder="Please enter your faculty number." />
+                <label asp-for="Input.FacultyNumber" class="form-label"></label>
+                <span asp-validation-for="Input.FacultyNumber" class="text-danger"></span>
+            </div>
             <button type="submit" class="w-100 btn btn-lg btn-primary">Register</button>
         </form>
     </div>

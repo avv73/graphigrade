@@ -85,6 +85,11 @@ namespace GraphiGrade.Areas.Identity.Pages.Account
             [Required]
             [EmailAddress]
             public string Email { get; set; }
+
+            [Required]
+            [StringLength(10, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 4)]
+            [Display(Name = "Faculty number")]
+            public string FacultyNumber { get; set; }
         }
         
         public IActionResult OnGet() => RedirectToPage("./Login");
@@ -152,7 +157,7 @@ namespace GraphiGrade.Areas.Identity.Pages.Account
 
             if (ModelState.IsValid)
             {
-                var user = CreateUser();
+                var user = CreateUser(Input.FacultyNumber);
 
                 await _userStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
                 await _emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
@@ -198,11 +203,14 @@ namespace GraphiGrade.Areas.Identity.Pages.Account
             return Page();
         }
 
-        private User CreateUser()
+        private User CreateUser(string facultyNumber)
         {
             try
             {
-                return Activator.CreateInstance<User>();
+                var userInstance = Activator.CreateInstance<User>();
+                userInstance.FacultyNumber = facultyNumber;
+
+                return userInstance;
             }
             catch
             {

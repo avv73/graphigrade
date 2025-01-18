@@ -120,7 +120,12 @@ namespace GraphiGrade.Areas.Identity.Pages.Account
             [Display(Name = "Confirm password")]
             [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
             public string ConfirmPassword { get; set; }
-             
+
+            [Required]
+            [StringLength(10, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 4)]
+            [Display(Name = "Faculty number")]
+            public string FacultyNumber { get; set; }
+
             /// <summary>
             /// Token to validate reCaptcha against.
             /// </summary>
@@ -154,7 +159,7 @@ namespace GraphiGrade.Areas.Identity.Pages.Account
                     return Page();
                 }
 
-                var user = CreateUser();
+                var user = CreateUser(Input.FacultyNumber);
 
                 await _userStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
                 await _emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
@@ -196,11 +201,14 @@ namespace GraphiGrade.Areas.Identity.Pages.Account
             return Page();
         }
 
-        private User CreateUser()
+        private User CreateUser(string facultyNumber)
         {
             try
             {
-                return Activator.CreateInstance<User>();
+                var userInstance = Activator.CreateInstance<User>();
+                userInstance.FacultyNumber = facultyNumber;
+
+                return userInstance;
             }
             catch
             {

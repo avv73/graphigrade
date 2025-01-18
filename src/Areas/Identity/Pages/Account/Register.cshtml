@@ -27,6 +27,11 @@
                 <label asp-for="Input.ConfirmPassword">Confirm Password</label>
                 <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
             </div>
+            <div class="form-floating mb-3">
+                <input asp-for="Input.FacultyNumber" class="form-control" autocomplete="facultyNumber" aria-required="true" placeholder="123456" />
+                <label asp-for="Input.FacultyNumber">Faculty Number</label>
+                <span asp-validation-for="Input.FacultyNumber" class="text-danger"></span>
+            </div>
             <div class="g-recaptcha" data-sitekey="@Model.RecaptchaSiteKey" data-action="@Model.RecaptchaRegisterActionName" data-callback="reCaptchaResponse"></div>
             <input asp-for="Input.RecaptchaToken" hidden="true" id="recaptchaToken"/>
             <button id="registerSubmit" type="submit" class="w-100 btn btn-lg btn-primary">Register</button>
