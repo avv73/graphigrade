@@ -2,7 +2,7 @@
 
 namespace GraphiGrade.Judge.DTOs;
 
-public class JudgeBatchResponse
+public record JudgeBatchResponse
 {
     public string SubmissionId { get; set; } = null!;
 
@@ -17,7 +17,7 @@ public class JudgeBatchResponse
     public DateTime Timestamp { get; set; }
 }
 
-public class JudgeSubmissionResult
+public record JudgeSubmissionResult
 {
     /// <summary>
     /// Base64 image of the result joined with the pattern
