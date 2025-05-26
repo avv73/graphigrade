@@ -4,14 +4,15 @@ namespace GraphiGrade.Models;
 
 public class FileMetadata
 {
-    public required int Id { get; set; }
+    public int Id { get; set; }
 
+    [Required]
     [MaxLength(100)]
-    public required string StorageUrl { get; set; }
-    public required byte Type { get; set; }
-    public required int Size { get; set; }
+    public string StorageUrl { get; set; } = null!;
+    public byte Type { get; set; }
+    public int Size { get; set; }
 
-    public required ICollection<Exercise> ExercisesAsExpectedImage { get; set; }
-    public required ICollection<Submission> SubmissionsResultImage { get; set; }
-    public required ICollection<Submission> SubmissionsSourceCode { get; set; }
+    public ICollection<Exercise> ExercisesAsExpectedImage { get; set; }
+    public ICollection<Submission> SubmissionsResultImage { get; set; }
+    public ICollection<Submission> SubmissionsSourceCode { get; set; }
 }

@@ -2,9 +2,9 @@
 
 public class ExercisesGroups
 {
-    public required int ExerciseId { get; set; }
-    public required int GroupId { get; set; }
+    public int ExerciseId { get; set; }
+    public int GroupId { get; set; }
 
-    public required Exercise Exercise { get; set; }
-    public required Group Group { get; set; }
+    public Exercise Exercise { get; set; } = null!;
+    public Group Group { get; set; } = null!;
 }

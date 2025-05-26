@@ -4,11 +4,12 @@ namespace GraphiGrade.Models;
 
 public class Group
 {
-    public required int Id { get; set; }
+    public int Id { get; set; }
 
+    [Required]
     [MaxLength(30)]
-    public required string GroupName { get; set; }
+    public string GroupName { get; set; } = null!;
 
-    public required ICollection<ExercisesGroups> ExercisesGroups { get; set; }
-    public required ICollection<UsersGroups> UsersGroups { get; set; }
+    public ICollection<ExercisesGroups> ExercisesGroups { get; set; } = null!;
+    public ICollection<UsersGroups> UsersGroups { get; set; } = null!;
 }

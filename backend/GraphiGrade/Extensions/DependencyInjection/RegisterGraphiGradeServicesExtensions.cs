@@ -1,7 +1,11 @@
-﻿using GraphiGrade.Configurations;
-using GraphiGrade.Data;
+﻿using GraphiGrade.Data;
+using GraphiGrade.Repositories;
+using GraphiGrade.Repositories.Abstractions;
+using GraphiGrade.Services;
+using GraphiGrade.Services.Abstractions;
+using GraphiGrade.Services.Utils;
+using GraphiGrade.Services.Utils.Abstractions;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 
 namespace GraphiGrade.Extensions.DependencyInjection;
 
@@ -9,13 +13,17 @@ public static class RegisterGraphiGradeServicesExtensions
 {
     public static void AddGraphiGradeServices(this IServiceCollection services, IConfiguration configuration)
     {
-        // Read configuration from Options Pattern to setup services down the line.  
-        var optionsConfiguration = new GraphiGradeConfig
-        {
-            DbConnectionString = configuration.GetSection("GraphiGradeConfig:DbConnectionString").Value!
-        };
+        // Setup EF Core DbContext 
+        services.AddDbContext<GraphiGradeDbContext>(options => options.UseSqlServer(configuration.GetSection("GraphiGradeConfig:DbConnectionString").Value));
 
-        // Setup EF Core  
-        services.AddDbContext<GraphiGradeDbContext>(options => options.UseSqlServer(optionsConfiguration.DbConnectionString));
+        // Register unit of work
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+        // Register utils
+        services.AddSingleton<IPasswordHasher, PasswordHasher>();
+        services.AddSingleton<IJwtService, JwtService>();
+
+        // Register services
+        services.AddScoped<IUserService, UserService>();
     }
 }

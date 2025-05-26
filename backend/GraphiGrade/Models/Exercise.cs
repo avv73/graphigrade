@@ -4,20 +4,22 @@ namespace GraphiGrade.Models;
 
 public class Exercise
 {
-    public required int Id { get; set; }
+    public int Id { get; set; }
 
+    [Required]
     [MaxLength(100)]
-    public required string Title { get; set; }
+    public string Title { get; set; }
+
     [MaxLength(1000)]
     public string? Description { get; set; }
 
-    public required int ExpectedImageId { get; set; }
-    public required int CreatedById { get; set; }
-    public required DateTime CreatedAt { get; set; }
+    public int ExpectedImageId { get; set; }
+    public int CreatedById { get; set; }
+    public DateTime CreatedAt { get; set; }
     public bool IsVisible { get; set; }
 
-    public required FileMetadata ExpectedImage { get; set; }
-    public required User CreatedBy { get; set; }
-    public required ICollection<ExercisesGroups> ExercisesGroups { get; set; }
-    public required ICollection<Submission> Submissions { get; set; }
+    public FileMetadata ExpectedImage { get; set; }
+    public User CreatedBy { get; set; }
+    public ICollection<ExercisesGroups> ExercisesGroups { get; set; }
+    public ICollection<Submission> Submissions { get; set; }
 }

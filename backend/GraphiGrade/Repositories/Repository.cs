@@ -1,6 +1,7 @@
 ﻿using GraphiGrade.Data;
 using GraphiGrade.Repositories.Abstractions;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 namespace GraphiGrade.Repositories;
 
@@ -21,9 +22,19 @@ public class Repository<T> : IRepository<T> where T : class
         return await DbSet.FindAsync(id);
     }
 
+    public async Task<T?> GetFirstByFilterAsync(Expression<Func<T, bool>> predicate)
+    {
+        return await DbSet.FirstOrDefaultAsync(predicate);
+    }
+
     public async Task AddAsync(T entity)
     {
         await DbSet.AddAsync(entity);
+    }
+
+    public async Task<bool> ExistsAsync(Expression<Func<T, bool>> predicate)
+    {
+        return await DbSet.AnyAsync(predicate);
     }
 
     public void Update(T entity)

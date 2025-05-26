@@ -4,17 +4,20 @@ namespace GraphiGrade.Models;
 
 public class User
 {
-    public required int Id { get; set; }
+    public int Id { get; set; }
 
     [MaxLength(30)]
-    public required string Username { get; set; }
+    [Required]
+    public string Username { get; set; } = null!;
+
     /// <summary>
-    /// SHA-256 hash, CHAR(64)
+    /// BCrypt hash, CHAR(60)
     /// </summary>
-    public required string Password { get; set; } 
+    [Required]
+    public string Password { get; set; } = null!;
 
     public bool IsTeacher { get; set; }
 
-    public required ICollection<Submission> Submissions { get; set; }
-    public required ICollection<UsersGroups> UsersGroups { get; set; }
+    public ICollection<Submission> Submissions { get; set; }
+    public ICollection<UsersGroups> UsersGroups { get; set; }
 }

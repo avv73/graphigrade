@@ -94,7 +94,7 @@ public class GraphiGradeDbContext : DbContext
 
         modelBuilder.Entity<User>()
             .Property(u => u.Password)
-            .HasColumnType("CHAR(64)");
+            .HasColumnType("CHAR(60)");
 
         base.OnModelCreating(modelBuilder);
     }
