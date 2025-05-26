@@ -1,5 +1,5 @@
 ﻿using GraphiGrade.DTOs;
-using GraphiGrade.DTOs.Auth.Responses.Abstractions;
+using GraphiGrade.DTOs.Abstractions;
 
 namespace GraphiGrade.Models.ServiceModels;
 

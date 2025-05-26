@@ -1,11 +1,15 @@
-﻿using GraphiGrade.DTOs.Auth.Requests;
+﻿using System.Diagnostics;
 using GraphiGrade.DTOs.Auth.Responses;
+using GraphiGrade.DTOs.User.Responses;
 using GraphiGrade.Models;
 using GraphiGrade.Models.ServiceModels;
 using GraphiGrade.Repositories.Abstractions;
 using GraphiGrade.Services.Abstractions;
 using GraphiGrade.Services.Utils.Abstractions;
 using System.Net;
+using GraphiGrade.Mappers.Abstractions;
+using RegisterRequest = GraphiGrade.DTOs.Auth.Requests.RegisterRequest;
+using LoginRequest = GraphiGrade.DTOs.Auth.Requests.LoginRequest;
 
 namespace GraphiGrade.Services;
 
@@ -14,13 +18,15 @@ public class UserService : IUserService
     private readonly IUnitOfWork _unitOfWork;
     private readonly IPasswordHasher _passwordHasher;
     private readonly IJwtService _jwtService;
+    private readonly IUserMapper _userMapper;
     private readonly ILogger<UserService> _logger;
 
-    public UserService(IUnitOfWork unitOfWork, IPasswordHasher passwordHasher, IJwtService jwtService, ILogger<UserService> logger)
+    public UserService(IUnitOfWork unitOfWork, IPasswordHasher passwordHasher, IJwtService jwtService, IUserMapper userMapper, ILogger<UserService> logger)
     {
         _unitOfWork = unitOfWork;
         _passwordHasher = passwordHasher;
         _jwtService = jwtService;
+        _userMapper = userMapper;
         _logger = logger;
     }
 
@@ -107,5 +113,30 @@ public class UserService : IUserService
         }
 
         return ServiceResultFactory<LoginResponse>.CreateError(HttpStatusCode.Unauthorized);
+    }
+
+    public async Task<ServiceResult<GetUserResponse>> GetUserByUsernameAsync(string username, CancellationToken cancellationToken)
+    {
+        User? matchedUser;
+        
+        try
+        {
+            matchedUser = await _unitOfWork.Users.GetFirstByFilterAsync(u => u.Username == username);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(exception: ex, "Error when checking existing user!");
+
+            return ServiceResultFactory<GetUserResponse>.CreateError(
+                HttpStatusCode.InternalServerError,
+                "Unexpected error when fetching data, please try again later");
+        }
+
+        if (matchedUser == null)
+        {
+            return ServiceResultFactory<GetUserResponse>.CreateError(HttpStatusCode.NotFound);
+        }
+
+        return ServiceResultFactory<GetUserResponse>.CreateResult(_userMapper.MapToGetUserResponse(matchedUser));
     }
 }

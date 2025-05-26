@@ -23,9 +23,12 @@ namespace GraphiGrade
                 options.SchemaFilter<PasswordValidationDescriptionFilter>();
             });
 
-            builder.AddGraphiGradeConfig();
+            var config = builder.AddGraphiGradeConfig();
 
-            builder.Services.AddGraphiGradeServices(builder.Configuration);
+            builder.Services.AddGraphiGradeServices(config);
+            builder.Services.AddGraphiGradeAuthentication(config);
+
+            builder.Services.AddHttpContextAccessor();
 
             var app = builder.Build();
             
@@ -36,6 +39,8 @@ namespace GraphiGrade
             }
 
             app.UseHttpsRedirection();
+
+            app.UseAuthentication();
 
             app.UseAuthorization();
 

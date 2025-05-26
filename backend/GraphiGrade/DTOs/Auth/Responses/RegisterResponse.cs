@@ -1,4 +1,4 @@
-﻿using GraphiGrade.DTOs.Auth.Responses.Abstractions;
+﻿using GraphiGrade.DTOs.Abstractions;
 
 namespace GraphiGrade.DTOs.Auth.Responses;
 

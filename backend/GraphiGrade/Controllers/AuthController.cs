@@ -34,9 +34,8 @@ public class AuthController : ControllerBase
                 StatusCode = (int)response.Error!.ErrorCode
             };
         }
-        
 
-        return Created($"api/users/{response.Result!.Username}", response);
+        return Created($"api/users/{response.Result!.Username}", response); // TODO: Use Link Builder here.
     }
 
     [HttpPost]

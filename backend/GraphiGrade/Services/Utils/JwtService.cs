@@ -5,6 +5,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using GraphiGrade.Constants;
 using Microsoft.Extensions.Options;
 
 namespace GraphiGrade.Services.Utils;
@@ -26,7 +27,7 @@ public class JwtService : IJwtService
         [
             new Claim(ClaimTypes.NameIdentifier, user.Username),
             new Claim(ClaimTypes.SerialNumber, Guid.NewGuid().ToString()),
-            new Claim(ClaimTypes.Role, user.IsTeacher ? "Admin" : "Student")
+            new Claim(ClaimTypes.Role, user.IsTeacher ? Role.AdminRole : Role.StudentRole)
         ];
 
         SymmetricSecurityKey key = new(Encoding.UTF8.GetBytes(_config.JwtSecretKey));
