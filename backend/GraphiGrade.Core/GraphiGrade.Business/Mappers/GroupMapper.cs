@@ -1,5 +1,6 @@
 ﻿using GraphiGrade.Business.Mappers.Abstractions;
 using GraphiGrade.Contracts.DTOs.Common;
+using GraphiGrade.Contracts.DTOs.User.Responses;
 using GraphiGrade.Data.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -17,7 +18,7 @@ public class GroupMapper : IGroupMapper
         _httpContextAccessor = httpContextAccessor;
     }
 
-    public UserGroupDto MapToUserGroupDto(Group group)
+    public CommonResourceDto MapToUserGroupDto(Group group)
     {
         if (_httpContextAccessor.HttpContext == null)
         {
@@ -30,11 +31,24 @@ public class GroupMapper : IGroupMapper
             controller: "Group",
             values: new { id = group.Id });
 
-        return new UserGroupDto
+        return new CommonResourceDto
         {
             Id = group.Id,
             Name = group.GroupName,
             Uri = linkToGroup ?? string.Empty
+        };
+    }
+
+    public GetGroupResponse MapToGetGroupResponse(
+        Group group, 
+        IEnumerable<CommonResourceDto> groupUserList, 
+        IEnumerable<CommonResourceDto> groupExerciseList)
+    {
+        return new GetGroupResponse
+        {
+            Name = group.GroupName,
+            MembersInGroup = groupUserList,
+            AvailableExercises = groupExerciseList
         };
     }
 }

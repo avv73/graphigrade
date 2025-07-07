@@ -5,6 +5,7 @@ using GraphiGrade.Business.Services.Abstractions;
 using GraphiGrade.Business.Services.Utils.Abstractions;
 using GraphiGrade.Contracts.DTOs.Auth.Requests;
 using GraphiGrade.Contracts.DTOs.Auth.Responses;
+using GraphiGrade.Contracts.DTOs.Common;
 using GraphiGrade.Contracts.DTOs.User.Responses;
 using GraphiGrade.Data.Models;
 using GraphiGrade.Data.Repositories.Abstractions;
@@ -19,14 +20,25 @@ public class UserService : IUserService
     private readonly IPasswordHasher _passwordHasher;
     private readonly IJwtService _jwtService;
     private readonly IUserMapper _userMapper;
+    private readonly IExerciseMapper _exerciseMapper;
+    private readonly IGroupMapper _groupMapper;
     private readonly ILogger<UserService> _logger;
 
-    public UserService(IUnitOfWork unitOfWork, IPasswordHasher passwordHasher, IJwtService jwtService, IUserMapper userMapper, ILogger<UserService> logger)
+    public UserService(
+        IUnitOfWork unitOfWork, 
+        IPasswordHasher passwordHasher, 
+        IJwtService jwtService, 
+        IUserMapper userMapper, 
+        IExerciseMapper exerciseMapper, 
+        IGroupMapper groupMapper, 
+        ILogger<UserService> logger)
     {
         _unitOfWork = unitOfWork;
         _passwordHasher = passwordHasher;
         _jwtService = jwtService;
         _userMapper = userMapper;
+        _exerciseMapper = exerciseMapper;
+        _groupMapper = groupMapper;
         _logger = logger;
     }
 
@@ -137,6 +149,23 @@ public class UserService : IUserService
             return ServiceResultFactory<GetUserResponse>.CreateError(HttpStatusCode.NotFound);
         }
 
-        return ServiceResultFactory<GetUserResponse>.CreateResult(_userMapper.MapToGetUserResponse(matchedUser));
+        List<CommonResourceDto> mappedUserExercisesForUser = new();
+        List<CommonResourceDto> mappedUserGroupsForUser = new();
+
+        if (matchedUser.UsersGroups != null)
+        {
+            foreach (UsersGroups userUsersGroup in matchedUser.UsersGroups)
+            {
+                mappedUserGroupsForUser.Add(_groupMapper.MapToUserGroupDto(userUsersGroup.Group));
+
+                if (userUsersGroup.Group.ExercisesGroups != null)
+                {
+                    mappedUserExercisesForUser.AddRange(
+                        userUsersGroup.Group.ExercisesGroups.Select(exercisesGroup => _exerciseMapper.MapToCommonResourceDto(exercisesGroup.Exercise)));
+                }
+            }
+        }
+
+        return ServiceResultFactory<GetUserResponse>.CreateResult(_userMapper.MapToGetUserResponse(matchedUser, mappedUserExercisesForUser, mappedUserGroupsForUser));
     }
 }

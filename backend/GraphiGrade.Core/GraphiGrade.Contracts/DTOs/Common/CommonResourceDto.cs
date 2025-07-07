@@ -1,6 +1,6 @@
 ﻿namespace GraphiGrade.Contracts.DTOs.Common;
 
-public record UserExercisesDto
+public record CommonResourceDto
 {
     public int Id { get; set; }
 

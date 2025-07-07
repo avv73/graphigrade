@@ -1,6 +1,5 @@
-﻿using System.Net;
-using GraphiGrade.Contracts.DTOs;
-using GraphiGrade.Contracts.DTOs.Abstractions;
+﻿using GraphiGrade.Contracts.DTOs.Abstractions;
+using System.Net;
 
 namespace GraphiGrade.Business.ServiceModels.Factories;
 

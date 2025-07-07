@@ -1,5 +1,4 @@
 ﻿using GraphiGrade.Business.Authorization;
-using GraphiGrade.Business.Authorization.Policies.SameUserOrAdmin;
 using GraphiGrade.Business.Configurations;
 using GraphiGrade.Business.Mappers;
 using GraphiGrade.Business.Mappers.Abstractions;
@@ -13,7 +12,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using GraphiGrade.Business.Authorization.Policies.UserBelongsToGroupOrAdmin;
+using GraphiGrade.Business.Authorization.Policies.Admin;
+using GraphiGrade.Business.Authorization.Policies.SameUser;
+using GraphiGrade.Business.Authorization.Policies.UserBelongsToGroup;
 
 namespace GraphiGrade.Business.Extensions.DependencyInjection;
 
@@ -41,8 +42,8 @@ public static class RegisterGraphiGradeServicesExtensions
 
     public static IServiceCollection AddGraphiGradeAuthentication(this IServiceCollection services, GraphiGradeConfig configuration)
     {
-        services.AddSingleton<IAuthorizationHandler, SameUserOrAdminHandler>();
-        services.AddScoped<IAuthorizationHandler, UserBelongsToGroupOrAdminHandler>();
+        services.AddSingleton<IAuthorizationHandler, SameUserHandler>();
+        services.AddScoped<IAuthorizationHandler, UserBelongsToGroupHandler>();
 
         services
             .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -61,7 +62,10 @@ public static class RegisterGraphiGradeServicesExtensions
             });
 
         services.AddAuthorizationBuilder()
-            .AddPolicy(Policy.SameUserOrAdmin, policy => policy.Requirements.Add(new SameUserOrAdminRequirement(Role.AdminRole)));
+            .AddPolicy(Policy.Admin, policy => policy.Requirements.Add(RequirementsFactory.CreateAdminRequirement()))
+            .AddPolicy(Policy.SameUser, policy => policy.Requirements.Add(RequirementsFactory.CreateSameUserRequirement()))
+            .AddPolicy(Policy.UserBelongsToGroup, policy => policy.Requirements.Add(RequirementsFactory.CreateUserBelongsToGroupRequirement()))
+            .AddPolicy(Policy.UserHasExercise, policy => policy.Requirements.Add(RequirementsFactory.CreateUserHasExerciseRequirement()));
 
         return services;
     }

@@ -1,40 +1,40 @@
-﻿using System.Net;
+﻿using GraphiGrade.Business.ServiceModels.Factories;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using System.Net;
 using GraphiGrade.Business.Authorization;
 using GraphiGrade.Business.Authorization.Policies.Abstractions;
 using GraphiGrade.Business.ServiceModels;
-using GraphiGrade.Business.ServiceModels.Factories;
 using GraphiGrade.Business.Services.Abstractions;
-using GraphiGrade.Contracts.DTOs;
+using GraphiGrade.Contracts.DTOs.Exercise.Responses;
 using GraphiGrade.Contracts.DTOs.User.Responses;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
+using GraphiGrade.Contracts.DTOs;
 
 namespace GraphiGrade.Web.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class GroupController : ControllerBase
+public class ExerciseController : ControllerBase
 {
     private readonly IAuthorizationService _authorizationService;
-    private readonly IGroupService _groupService;
+    private readonly IExerciseService _exerciseService;
 
-    private readonly IEnumerable<IAuthorizationRequirementErrorProducer> _authRequirements;
+    private readonly IEnumerable<IAuthorizationRequirementErrorProducer> _authRequirements = 
+        RequirementsFactory.CreateRequirements(Policy.Admin, Policy.UserHasExercise);
 
-    public GroupController(IAuthorizationService authorizationService, IGroupService groupService)
+    public ExerciseController(IAuthorizationService authorizationService, IExerciseService exerciseService)
     {
         _authorizationService = authorizationService;
-        _groupService = groupService;
-
-        _authRequirements = RequirementsFactory.CreateRequirements(Policy.Admin, Policy.UserBelongsToGroup);
+        _exerciseService = exerciseService;
     }
 
     [HttpGet]
     [Route("{id}")]
-    [ProducesResponseType<GetUserResponse>(StatusCodes.Status200OK, "application/json")]
+    [ProducesResponseType<GetExerciseResponse>(StatusCodes.Status200OK, "application/json")]
     [ProducesResponseType<ErrorResponse>(StatusCodes.Status403Forbidden, "application/json")]
     [ProducesResponseType<ErrorResponse>(StatusCodes.Status404NotFound, "application/json")]
     [ProducesResponseType<ErrorResponse>(StatusCodes.Status500InternalServerError, "application/json")]
-    public async Task<IActionResult> GetGroupByIdAsync(int id, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetExerciseByIdAsync(int id, CancellationToken cancellationToken)
     {
         if (id <= 0)
         {
@@ -45,10 +45,10 @@ public class GroupController : ControllerBase
         }
 
         AuthorizationResult authResult = await _authorizationService.AuthorizeAsync(
-            User, 
-            id, 
+            User,
+            id,
             _authRequirements);
-    
+
         if (!authResult.Succeeded)
         {
             return new ObjectResult(ErrorResponseFactory.CreateError(HttpStatusCode.Forbidden))
@@ -57,7 +57,8 @@ public class GroupController : ControllerBase
             };
         }
 
-        ServiceResult<GetGroupResponse> response = await _groupService.GetGroupByIdAsync(id, cancellationToken);
+        ServiceResult<GetExerciseResponse> response =
+            await _exerciseService.GetExerciseByIdAsync(id, User, cancellationToken);
 
         if (response.IsError)
         {

@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using GraphiGrade.Business.Authorization;
+using GraphiGrade.Business.Authorization.Policies.Abstractions;
 using GraphiGrade.Business.ServiceModels;
 using GraphiGrade.Business.ServiceModels.Factories;
 using GraphiGrade.Business.Services.Abstractions;
@@ -17,10 +18,14 @@ public class UserController : ControllerBase
     private readonly IUserService _userService;
     private readonly IAuthorizationService _authorizationService;
 
+    private readonly IEnumerable<IAuthorizationRequirementErrorProducer> _authRequirements;
+    
     public UserController(IUserService userService, IAuthorizationService authorizationService)
     {
         _userService = userService;
         _authorizationService = authorizationService;
+
+        _authRequirements = RequirementsFactory.CreateRequirements(Policy.Admin, Policy.SameUser);
     }
 
     [HttpGet]
@@ -33,13 +38,16 @@ public class UserController : ControllerBase
     {
         if (string.IsNullOrWhiteSpace(username))
         {
-            return new ObjectResult(ErrorResponseFactory.CreateError(HttpStatusCode.NotFound))
+            return new ObjectResult(ErrorResponseFactory.CreateError(HttpStatusCode.BadRequest))
             {
-                StatusCode = (int)HttpStatusCode.NotFound
+                StatusCode = (int)HttpStatusCode.BadRequest
             };
         }
 
-        AuthorizationResult authResult = await _authorizationService.AuthorizeAsync(User, username, Policy.SameUserOrAdmin);
+        AuthorizationResult authResult = await _authorizationService.AuthorizeAsync(
+            User, 
+            username, 
+            _authRequirements);
 
         if (!authResult.Succeeded)
         {

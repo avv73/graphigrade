@@ -1,5 +1,6 @@
 ﻿using GraphiGrade.Business.Mappers.Abstractions;
 using GraphiGrade.Contracts.DTOs.Common;
+using GraphiGrade.Contracts.DTOs.Exercise.Responses;
 using GraphiGrade.Data.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -17,7 +18,7 @@ public class ExerciseMapper : IExerciseMapper
         _httpContextAccessor = httpContextAccessor;
     }
 
-    public UserExercisesDto ToUserExercises(Exercise exercise)
+    public CommonResourceDto MapToCommonResourceDto(Exercise exercise)
     {
         if (_httpContextAccessor.HttpContext == null)
         {
@@ -26,15 +27,32 @@ public class ExerciseMapper : IExerciseMapper
 
         string? linkToExercise = _linkGenerator.GetUriByAction(
             _httpContextAccessor.HttpContext,
-            action: "GetExerciseByIdAsync",
+            action: "GetExerciseById",
             controller: "Exercise",
             values: new { id = exercise.Id });
 
-        return new UserExercisesDto
+        return new CommonResourceDto
         {
             Id = exercise.Id,
             Name = exercise.Title,
             Uri = linkToExercise ?? string.Empty
+        };
+    }
+
+    public GetExerciseResponse MapToGetExerciseResponse(
+        Exercise exercise, 
+        string imageBlobUrl, 
+        CommonResourceDto createdByUser,
+        IEnumerable<CommonResourceDto> submissions)
+    {
+        return new GetExerciseResponse
+        {
+            Title = exercise.Title,
+            Description = exercise.Description ?? string.Empty,
+            CreatedAt = exercise.CreatedAt,
+            CreatedByUser = createdByUser,
+            ImageBlobUrl = imageBlobUrl,
+            Submissions = submissions
         };
     }
 }

@@ -2,46 +2,52 @@
 using GraphiGrade.Contracts.DTOs.Common;
 using GraphiGrade.Contracts.DTOs.User.Responses;
 using GraphiGrade.Data.Models;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
 
 namespace GraphiGrade.Business.Mappers;
 
 public class UserMapper : IUserMapper
 {
-    private readonly IExerciseMapper _exerciseMapper;
-    private readonly IGroupMapper _groupMapper;
+    private readonly LinkGenerator _linkGenerator;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public UserMapper(IExerciseMapper exerciseMapper, IGroupMapper groupMapper)
+    public UserMapper(LinkGenerator linkGenerator, IHttpContextAccessor httpContextAccessor)
     {
-        _exerciseMapper = exerciseMapper;
-        _groupMapper = groupMapper;
+        _linkGenerator = linkGenerator;
+        _httpContextAccessor = httpContextAccessor;
     }
 
-    public GetUserResponse MapToGetUserResponse(User user)
+    public GetUserResponse MapToGetUserResponse(User user, 
+        IEnumerable<CommonResourceDto> mappedUserExercisesForUser,
+        IEnumerable<CommonResourceDto> mappedUserGroupsForUser)
     {
-        List<UserExercisesDto> mappedUserExercisesForUser = new();
-        List<UserGroupDto> mappedUserGroupsForUser = new();
-
-        if (user.UsersGroups != null)
-        {
-            foreach (UsersGroups userUsersGroup in user.UsersGroups)
-            {
-                mappedUserGroupsForUser.Add(_groupMapper.MapToUserGroupDto(userUsersGroup.Group));
-
-                if (userUsersGroup.Group.ExercisesGroups != null)
-                {
-                    foreach (ExercisesGroups exercisesGroup in userUsersGroup.Group.ExercisesGroups)
-                    {
-                        mappedUserExercisesForUser.Add(_exerciseMapper.ToUserExercises(exercisesGroup.Exercise));
-                    }
-                }
-            }
-        }
-
         return new GetUserResponse
         {
             Username = user.Username,
             AvailableExercises = mappedUserExercisesForUser,
             MemberInGroups = mappedUserGroupsForUser
+        };
+    }
+
+    public CommonResourceDto MapToCommonResourceDto(User user)
+    {
+        if (_httpContextAccessor.HttpContext == null)
+        {
+            throw new NullReferenceException("Expected HttpContext to be not null.");
+        }
+
+        string? linkToUser = _linkGenerator.GetUriByAction(
+            _httpContextAccessor.HttpContext,
+            action: "GetByUsername",
+            controller: "User",
+            values: new { username = user.Username });
+
+        return new CommonResourceDto
+        {
+            Id = user.Id,
+            Name = user.Username,
+            Uri = linkToUser ?? string.Empty
         };
     }
 }
