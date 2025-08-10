@@ -14,16 +14,13 @@ namespace GraphiGrade.Web.Controllers;
 [Authorize] // Require authentication for all endpoints
 public class SubmissionController : ControllerBase
 {
-    private readonly IAuthorizationService _authorizationService;
     private readonly ISubmissionService _submissionService;
     private readonly IUserResolverService _userResolverService;
 
     public SubmissionController(
-        IAuthorizationService authorizationService,
         ISubmissionService submissionService,
         IUserResolverService userResolverService)
     {
-        _authorizationService = authorizationService;
         _submissionService = submissionService;
         _userResolverService = userResolverService;
     }
