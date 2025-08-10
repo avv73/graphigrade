@@ -10,6 +10,7 @@ using GraphiGrade.Data.Models;
 using GraphiGrade.Data.Repositories.Abstractions;
 using Microsoft.Extensions.Logging;
 using System.Net;
+using Microsoft.EntityFrameworkCore;
 
 namespace GraphiGrade.Business.Services;
 
@@ -36,7 +37,12 @@ public class GroupService : IGroupService
 
         try
         {
-            matchedGroup = await _unitOfWork.Groups.GetByIdAsync(id);
+            matchedGroup = await _unitOfWork.Groups.GetByIdWithIncludesAsync(id, query =>
+                query
+                    .Include(g => g.UsersGroups)
+                        .ThenInclude(ug => ug.User)
+                    .Include(g => g.ExercisesGroups)
+                        .ThenInclude(eg => eg.Exercise));
         }
         catch (Exception ex)
         {

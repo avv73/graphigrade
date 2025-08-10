@@ -2,6 +2,7 @@
 using GraphiGrade.Data.Repositories.Abstractions;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
+using Microsoft.EntityFrameworkCore;
 
 namespace GraphiGrade.Business.Authorization.Policies.UserBelongsToGroup;
 
@@ -19,9 +20,17 @@ public class UserBelongsToGroupHandler : AuthorizationHandler<UserBelongsToGroup
         UserBelongsToGroupRequirement requirement,
         int groupId) // resource is groupId
     {
-        string username = context.User.FindFirst(ClaimTypes.NameIdentifier)!.Value;
+        var userClaim = context.User.FindFirst(ClaimTypes.NameIdentifier);
+        if (userClaim == null)
+        {
+            return;
+        }
+
+        string username = userClaim.Value;
         
-        Group? group = await _unitOfWork.Groups.GetByIdAsync(groupId);
+        Group? group = await _unitOfWork.Groups.GetByIdWithIncludesAsync(groupId, query => query
+            .Include(gr => gr.UsersGroups)
+                .ThenInclude(ug => ug.User));
 
         if (group == null)
         {

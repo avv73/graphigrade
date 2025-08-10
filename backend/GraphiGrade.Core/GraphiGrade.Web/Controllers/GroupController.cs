@@ -20,14 +20,10 @@ public class GroupController : ControllerBase
     private readonly IAuthorizationService _authorizationService;
     private readonly IGroupService _groupService;
 
-    private readonly IEnumerable<IAuthorizationRequirementErrorProducer> _authRequirements;
-
     public GroupController(IAuthorizationService authorizationService, IGroupService groupService)
     {
         _authorizationService = authorizationService;
         _groupService = groupService;
-
-        _authRequirements = RequirementsFactory.CreateRequirements(Policy.Admin, Policy.UserBelongsToGroup);
     }
 
     [HttpPost]
@@ -91,19 +87,18 @@ public class GroupController : ControllerBase
             };
         }
 
-        AuthorizationResult authResult = await _authorizationService.AuthorizeAsync(
-            User, 
-            id, 
-            _authRequirements);
-    
-        if (!authResult.Succeeded)
+        // Check if user is Admin OR belongs to the group
+        var adminCheck = await _authorizationService.AuthorizeAsync(User, Policy.Admin);
+        var memberCheck = await _authorizationService.AuthorizeAsync(User, id, Policy.UserBelongsToGroup);
+
+        if (!adminCheck.Succeeded && !memberCheck.Succeeded)
         {
             return new ObjectResult(ErrorResponseFactory.CreateError(HttpStatusCode.Forbidden))
             {
                 StatusCode = (int)HttpStatusCode.Forbidden
             };
         }
-
+        
         ServiceResult<GetGroupResponse> response = await _groupService.GetGroupByIdAsync(id, cancellationToken);
 
         if (response.IsError)

@@ -7,7 +7,6 @@ public class FileMetadata
     public int Id { get; set; }
 
     [Required]
-    [MaxLength(100)]
     public string StorageUrl { get; set; } = null!;
     public byte Type { get; set; }
     public int Size { get; set; }

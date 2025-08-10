@@ -11,6 +11,7 @@ using GraphiGrade.Data.Repositories.Abstractions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Net;
+using Microsoft.EntityFrameworkCore;
 
 namespace GraphiGrade.Business.Services;
 
@@ -80,7 +81,9 @@ public class SubmissionService : ISubmissionService
         Exercise? exercise;
         try
         {
-            exercise = await _unitOfWork.Exercises.GetByIdAsync(exerciseId);
+            exercise = await _unitOfWork.Exercises.GetByIdWithIncludesAsync(exerciseId, 
+                query => 
+                    query.Include(ex => ex.ExpectedImage));
         }
         catch (Exception ex)
         {
@@ -178,9 +181,9 @@ public class SubmissionService : ISubmissionService
             JudgeId = judgeResponse.SubmissionId,
             Status = (byte)judgeResponse.Status,
             ErrorCode = (byte)judgeResponse.ErrorCode,
-            SourceCodeId = sourceCodeFileMetadata.Id,
             SubmittedAt = DateTime.UtcNow,
-            LastUpdate = judgeResponse.Timestamp
+            LastUpdate = judgeResponse.Timestamp,
+            SourceCode = sourceCodeFileMetadata
         };
 
         await _unitOfWork.Submissions.AddAsync(submission);

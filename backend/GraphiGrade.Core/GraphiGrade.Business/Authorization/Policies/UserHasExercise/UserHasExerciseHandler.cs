@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using GraphiGrade.Data.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace GraphiGrade.Business.Authorization.Policies.UserHasExercise;
 
@@ -21,13 +22,17 @@ public class UserHasExerciseHandler : AuthorizationHandler<UserHasExerciseRequir
     {
         string username = context.User.FindFirst(ClaimTypes.NameIdentifier)!.Value;
 
-        Exercise? exercise = await _unitOfWork.Exercises.GetByIdAsync(exerciseId);
+        Exercise? exercise = await _unitOfWork.Exercises.GetByIdWithIncludesAsync(exerciseId, 
+            query => 
+                query.Include(ex => ex.ExercisesGroups)
+                        .ThenInclude(eg => eg.Group)
+                        .ThenInclude(g => g.UsersGroups)
+                        .ThenInclude(ug => ug.User));
 
         if (exercise == null)
         {
             return;
         }
-
 
         // Check if the user has the exercise assigned
         if (exercise.ExercisesGroups

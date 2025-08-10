@@ -23,32 +23,4 @@ public static class RequirementsFactory
     public static UserBelongsToGroupRequirement CreateUserBelongsToGroupRequirement() => UserBelongsToGroupRequirement;
 
     public static UserHasExerciseRequirement CreateUserHasExerciseRequirement() => UserHasExerciseRequirement;
-
-    public static IEnumerable<IAuthorizationRequirementErrorProducer> CreateRequirements(params string[] policies)
-    {
-        List<IAuthorizationRequirementErrorProducer> requirements = new();
-
-        foreach (string policy in policies)
-        {
-            switch (policy)
-            {
-                case Policy.Admin:
-                    requirements.Add(AdminRequirement);
-                    break;
-                case Policy.SameUser:
-                    requirements.Add(SameUserRequirement);
-                    break;
-                case Policy.UserBelongsToGroup:
-                    requirements.Add(UserBelongsToGroupRequirement);
-                    break;
-                case Policy.UserHasExercise:
-                    requirements.Add(UserHasExerciseRequirement);
-                    break;
-                default:
-                    throw new InvalidOperationException();
-            }
-        }
-
-        return requirements;
-    }
 }

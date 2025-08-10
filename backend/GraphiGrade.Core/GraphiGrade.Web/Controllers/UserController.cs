@@ -17,15 +17,11 @@ public class UserController : ControllerBase
 {
     private readonly IUserService _userService;
     private readonly IAuthorizationService _authorizationService;
-
-    private readonly IEnumerable<IAuthorizationRequirementErrorProducer> _authRequirements;
     
     public UserController(IUserService userService, IAuthorizationService authorizationService)
     {
         _userService = userService;
         _authorizationService = authorizationService;
-
-        _authRequirements = RequirementsFactory.CreateRequirements(Policy.Admin, Policy.SameUser);
     }
 
     [HttpGet]
@@ -44,12 +40,10 @@ public class UserController : ControllerBase
             };
         }
 
-        AuthorizationResult authResult = await _authorizationService.AuthorizeAsync(
-            User, 
-            username, 
-            _authRequirements);
+        var adminCheck = await _authorizationService.AuthorizeAsync(User, Policy.Admin);
+        var memberCheck = await _authorizationService.AuthorizeAsync(User, Policy.SameUser);
 
-        if (!authResult.Succeeded)
+        if (!adminCheck.Succeeded && !memberCheck.Succeeded)
         {
             return new ObjectResult(ErrorResponseFactory.CreateError(HttpStatusCode.Forbidden))
             {

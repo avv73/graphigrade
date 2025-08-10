@@ -15,6 +15,7 @@ using System.Text;
 using GraphiGrade.Business.Authorization.Policies.Admin;
 using GraphiGrade.Business.Authorization.Policies.SameUser;
 using GraphiGrade.Business.Authorization.Policies.UserBelongsToGroup;
+using GraphiGrade.Business.Authorization.Policies.UserHasExercise;
 
 namespace GraphiGrade.Business.Extensions.DependencyInjection;
 
@@ -39,6 +40,7 @@ public static class RegisterGraphiGradeServicesExtensions
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IExerciseService, ExerciseService>();
         services.AddScoped<ISubmissionService, SubmissionService>();
+        services.AddScoped<IGroupService, GroupService>();
         services.AddScoped<IUserResolverService, UserResolverService>();
         services.AddScoped<IBlobStorageService, AzureBlobStorageService>();
         services.AddScoped<IJudgeService, JudgeService>();
@@ -51,7 +53,9 @@ public static class RegisterGraphiGradeServicesExtensions
 
     public static IServiceCollection AddGraphiGradeAuthentication(this IServiceCollection services, GraphiGradeConfig configuration)
     {
-        services.AddSingleton<IAuthorizationHandler, SameUserHandler>();
+        services.AddScoped<IAuthorizationHandler, SameUserHandler>();
+        services.AddScoped<IAuthorizationHandler, AdminHandler>();
+        services.AddScoped<IAuthorizationHandler, UserHasExerciseHandler>();
         services.AddScoped<IAuthorizationHandler, UserBelongsToGroupHandler>();
 
         services

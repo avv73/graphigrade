@@ -34,16 +34,16 @@ public partial class JudgeSourceCodeAnalyzerService : IJudgeSourceCodeAnalyzerSe
         List<string> reasons = new List<string>();
 
         // Check for I/O headers
-        isSuspicious = PerformStaticAnalysis(sourceCode, reasons, nameof(FileHeaders), FileHeaders);
+        PerformStaticAnalysis(sourceCode, reasons, nameof(FileHeaders), FileHeaders, ref isSuspicious);
 
         // Check for network headers
-        isSuspicious = PerformStaticAnalysis(sourceCode, reasons, nameof(NetworkHeaders), NetworkHeaders);
+        PerformStaticAnalysis(sourceCode, reasons, nameof(NetworkHeaders), NetworkHeaders, ref isSuspicious);
 
         // Check for file functions
-        isSuspicious = PerformStaticAnalysis(sourceCode, reasons, nameof(FileFunctions), FileFunctions);
+        PerformStaticAnalysis(sourceCode, reasons, nameof(FileFunctions), FileFunctions, ref isSuspicious);
 
         // Check for network functions
-        isSuspicious = PerformStaticAnalysis(sourceCode, reasons, nameof(NetworkFunctions), NetworkFunctions);
+        PerformStaticAnalysis(sourceCode, reasons, nameof(NetworkFunctions), NetworkFunctions, ref isSuspicious);
 
         // Check for inline assembly code
         if (AssemblyRegex().IsMatch(sourceCode))
@@ -76,9 +76,8 @@ public partial class JudgeSourceCodeAnalyzerService : IJudgeSourceCodeAnalyzerSe
         return isSuspicious;
     }
 
-    private static bool PerformStaticAnalysis(string sourceCode, List<string> reasons, string typeOfAnalysis, string[] suspicionStrings)
+    private static void PerformStaticAnalysis(string sourceCode, List<string> reasons, string typeOfAnalysis, string[] suspicionStrings, ref bool isSuspicious)
     {
-        bool isSuspicious = false;
         foreach (string suspicionString in suspicionStrings)
         {
             if (sourceCode.Contains(suspicionString, StringComparison.OrdinalIgnoreCase))
@@ -87,8 +86,6 @@ public partial class JudgeSourceCodeAnalyzerService : IJudgeSourceCodeAnalyzerSe
                 isSuspicious = true;
             }
         }
-
-        return isSuspicious;
     }
 
     [GeneratedRegex(@"\b(__asm|asm)\b")]

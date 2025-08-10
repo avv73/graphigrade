@@ -10,7 +10,13 @@ public class SameUserHandler : AuthorizationHandler<SameUserRequirement, string>
         SameUserRequirement requirement,
         string resource) // resource is username
     {
-        string username = context.User.FindFirst(ClaimTypes.NameIdentifier)!.Value;
+        var userClaim = context.User.FindFirst(ClaimTypes.NameIdentifier);
+        if (userClaim == null)
+        {
+            return Task.CompletedTask;
+        }
+
+        string username = userClaim.Value;
 
         if (username.Equals(resource, StringComparison.Ordinal))
         {
