@@ -139,7 +139,7 @@ public class ExerciseService : IExerciseService
         FileMetadata fileMetadata = new FileMetadata
         {
             Size = fileSize,
-            Type = 0, // ??,
+            Type = (byte)FileType.Image,
             StorageUrl = blobUrl
         };
 

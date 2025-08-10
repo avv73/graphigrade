@@ -10,10 +10,16 @@ public interface IBlobStorageService
     Task<string?> StoreImageAsync(string imageBase64);
 
     /// <summary>
-    /// Retrieves base64 image from blob storage.
+    /// Stores source code in a blob storage. Returns url of the source code file.
     /// </summary>
-    /// <param name="url"></param>
-    /// <returns></returns>
-    Task<string> RetrieveImageAsync(string url);
+    /// <param name="sourceCodeBase64">Base64 encoded source code content</param>
+    /// <returns>URL of the stored source code file</returns>
+    Task<string?> StoreSourceCodeAsync(string sourceCodeBase64);
 
+    /// <summary>
+    /// Retrieves base64 content from blob storage (works for any file type).
+    /// </summary>
+    /// <param name="url">The blob storage URL</param>
+    /// <returns>Base64 encoded content</returns>
+    Task<string> RetrieveContentAsync(string url);
 }

@@ -33,10 +33,18 @@ public static class RegisterGraphiGradeServicesExtensions
         services.AddScoped<IUserMapper, UserMapper>();
         services.AddScoped<IGroupMapper, GroupMapper>();
         services.AddScoped<IExerciseMapper, ExerciseMapper>();
+        services.AddScoped<ISubmissionMapper, SubmissionMapper>();
 
         // Register services
         services.AddScoped<IUserService, UserService>();
+        services.AddScoped<IExerciseService, ExerciseService>();
+        services.AddScoped<ISubmissionService, SubmissionService>();
+        services.AddScoped<IUserResolverService, UserResolverService>();
         services.AddScoped<IBlobStorageService, AzureBlobStorageService>();
+        services.AddScoped<IJudgeService, JudgeService>();
+
+        // Register HttpClient for JudgeService
+        services.AddHttpClient<IJudgeService, JudgeService>();
 
         return services;
     }

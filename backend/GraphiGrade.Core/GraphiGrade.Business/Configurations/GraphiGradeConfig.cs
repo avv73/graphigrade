@@ -20,6 +20,9 @@ public class GraphiGradeConfig : IValidatableObject
     public required string AzureBlobStorageConnectionString { get; set; }
     public required string AzureBlobStorageContainerName { get; set; }
 
+    // Judge Service configuration
+    public required string JudgeServiceUrl { get; set; }
+
     public long MaximumBase64CharsInResultPattern => (long)Math.Ceiling(MaximumBytesSizeOfResultPattern / 3.0) * 4;
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
@@ -62,6 +65,11 @@ public class GraphiGradeConfig : IValidatableObject
         if (string.IsNullOrWhiteSpace(AzureBlobStorageContainerName))
         {
             yield return new ValidationResult($"'{nameof(AzureBlobStorageContainerName)}' is missing from configuration!", new[] { nameof(AzureBlobStorageContainerName) });
+        }
+
+        if (string.IsNullOrWhiteSpace(JudgeServiceUrl))
+        {
+            yield return new ValidationResult($"'{nameof(JudgeServiceUrl)}' is missing from configuration!", new[] { nameof(JudgeServiceUrl) });
         }
     }
 }

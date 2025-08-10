@@ -6,6 +6,8 @@ using GraphiGrade.Business.Services.Abstractions;
 using GraphiGrade.Contracts.DTOs;
 using GraphiGrade.Contracts.DTOs.Exercise.Requests;
 using GraphiGrade.Contracts.DTOs.Exercise.Responses;
+using GraphiGrade.Contracts.DTOs.Submission.Requests;
+using GraphiGrade.Contracts.DTOs.Submission.Responses;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
@@ -13,8 +15,6 @@ using System.Net;
 namespace GraphiGrade.Web.Controllers;
 
 /// <summary>
-/// TODO: Create integration for blob storage in the cloud.
-/// TODO: Create endpoint for uploading results for judging.
 /// TODO: Create endpoint for submission statuses/visualization.
 /// </summary>
 
@@ -24,20 +24,25 @@ public class ExerciseController : ControllerBase
 {
     private readonly IAuthorizationService _authorizationService;
     private readonly IExerciseService _exerciseService;
+    private readonly ISubmissionService _submissionService;
     private readonly IUserResolverService _userResolverService;
 
     private readonly IEnumerable<IAuthorizationRequirementErrorProducer> _authRequirements = 
         RequirementsFactory.CreateRequirements(Policy.Admin, Policy.UserHasExercise);
 
-    public ExerciseController(IAuthorizationService authorizationService, IExerciseService exerciseService, IUserResolverService userResolverService)
+    public ExerciseController(
+        IAuthorizationService authorizationService, 
+        IExerciseService exerciseService, 
+        ISubmissionService submissionService,
+        IUserResolverService userResolverService)
     {
         _authorizationService = authorizationService;
         _exerciseService = exerciseService;
+        _submissionService = submissionService;
         _userResolverService = userResolverService;
     }
 
     [HttpPost]
-
     [ProducesResponseType<CreateExerciseResponse>(StatusCodes.Status200OK, "application/json")]
     [ProducesResponseType<ErrorResponse>(StatusCodes.Status403Forbidden, "application/json")]
     [ProducesResponseType<ErrorResponse>(StatusCodes.Status404NotFound, "application/json")]
@@ -116,6 +121,57 @@ public class ExerciseController : ControllerBase
         }
 
         ServiceResult<GetExerciseResponse> response = await _exerciseService.GetExerciseByIdAsync(id, cancellationToken);
+
+        if (response.IsError)
+        {
+            return new ObjectResult(response.Error)
+            {
+                StatusCode = (int)response.Error!.ErrorCode
+            };
+        }
+
+        return Ok(response.Result);
+    }
+
+    [HttpPost]
+    [Route("{id}/submit")]
+    [ProducesResponseType<SubmitSolutionResponse>(StatusCodes.Status200OK, "application/json")]
+    [ProducesResponseType<ErrorResponse>(StatusCodes.Status400BadRequest, "application/json")]
+    [ProducesResponseType<ErrorResponse>(StatusCodes.Status403Forbidden, "application/json")]
+    [ProducesResponseType<ErrorResponse>(StatusCodes.Status404NotFound, "application/json")]
+    [ProducesResponseType<ErrorResponse>(StatusCodes.Status500InternalServerError, "application/json")]
+    public async Task<IActionResult> SubmitSolutionAsync(int id, SubmitSolutionRequest request, CancellationToken cancellationToken)
+    {
+        if (id <= 0)
+        {
+            return new ObjectResult(ErrorResponseFactory.CreateError(HttpStatusCode.BadRequest))
+            {
+                StatusCode = (int)HttpStatusCode.BadRequest
+            };
+        }
+
+        AuthorizationResult authResult = await _authorizationService.AuthorizeAsync(
+            User,
+            id,
+            _authRequirements);
+
+        if (!authResult.Succeeded)
+        {
+            return new ObjectResult(ErrorResponseFactory.CreateError(HttpStatusCode.Forbidden))
+            {
+                StatusCode = (int)HttpStatusCode.Forbidden
+            };
+        }
+
+        if (!_userResolverService.Resolve(User))
+        {
+            return new ObjectResult(ErrorResponseFactory.CreateError(HttpStatusCode.Forbidden))
+            {
+                StatusCode = (int)HttpStatusCode.Forbidden
+            };
+        }
+
+        ServiceResult<SubmitSolutionResponse> response = await _submissionService.SubmitSolutionAsync(id, request, cancellationToken);
 
         if (response.IsError)
         {
