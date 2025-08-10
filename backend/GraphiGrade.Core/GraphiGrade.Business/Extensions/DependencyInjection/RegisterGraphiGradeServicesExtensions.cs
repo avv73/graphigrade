@@ -36,6 +36,7 @@ public static class RegisterGraphiGradeServicesExtensions
 
         // Register services
         services.AddScoped<IUserService, UserService>();
+        services.AddScoped<IBlobStorageService, AzureBlobStorageService>();
 
         return services;
     }

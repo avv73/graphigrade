@@ -17,7 +17,10 @@ public static class RegisterGraphiGradeConfigExtensions
             JwtSecretKey = null,
             JwtExpirationInSeconds = 0,
             JwtIssuer = null,
-            JwtAudience = null
+            JwtAudience = null,
+            MaximumBytesSizeOfResultPattern = 0,
+            AzureBlobStorageConnectionString = null,
+            AzureBlobStorageContainerName = null
         };
 
         builder.Configuration.GetSection(nameof(GraphiGradeConfig)).Bind(config);

@@ -16,6 +16,10 @@ public class GraphiGradeConfig : IValidatableObject
 
     public required int MaximumBytesSizeOfResultPattern { get; set; }
 
+    // Azure Blob Storage configuration
+    public required string AzureBlobStorageConnectionString { get; set; }
+    public required string AzureBlobStorageContainerName { get; set; }
+
     public long MaximumBase64CharsInResultPattern => (long)Math.Ceiling(MaximumBytesSizeOfResultPattern / 3.0) * 4;
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
@@ -48,6 +52,16 @@ public class GraphiGradeConfig : IValidatableObject
         if (MaximumBytesSizeOfResultPattern <= 0)
         {
             yield return new ValidationResult($"'{nameof(MaximumBytesSizeOfResultPattern)}' is incorrectly configured!", new[] { nameof(MaximumBytesSizeOfResultPattern) });
+        }
+
+        if (string.IsNullOrWhiteSpace(AzureBlobStorageConnectionString))
+        {
+            yield return new ValidationResult($"'{nameof(AzureBlobStorageConnectionString)}' is missing from configuration!", new[] { nameof(AzureBlobStorageConnectionString) });
+        }
+
+        if (string.IsNullOrWhiteSpace(AzureBlobStorageContainerName))
+        {
+            yield return new ValidationResult($"'{nameof(AzureBlobStorageContainerName)}' is missing from configuration!", new[] { nameof(AzureBlobStorageContainerName) });
         }
     }
 }
