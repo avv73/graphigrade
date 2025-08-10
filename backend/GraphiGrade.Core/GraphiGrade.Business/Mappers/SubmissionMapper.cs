@@ -1,5 +1,7 @@
 ﻿using GraphiGrade.Business.Mappers.Abstractions;
+using GraphiGrade.Business.ServiceModels.Judge;
 using GraphiGrade.Contracts.DTOs.Common;
+using GraphiGrade.Contracts.DTOs.Submission.Responses;
 using GraphiGrade.Data.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -26,15 +28,37 @@ public class SubmissionMapper : ISubmissionMapper
 
         string? linkToSubmission = _linkGenerator.GetUriByAction(
             _httpContextAccessor.HttpContext,
-            action: "GetById",
+            action: "GetSubmissionStatusAsync",
             controller: "Submission",
-            values: new { id = submission.Id });
+            values: new { submissionId = submission.JudgeId });
 
         return new CommonResourceDto
         {
             Id = submission.Id,
             Name = submission.JudgeId,
             Uri = linkToSubmission ?? string.Empty
+        };
+    }
+
+    public GetSubmissionStatusResponse MapToGetSubmissionStatusResponse(Submission submission, JudgeBatchResponse judgeResponse)
+    {
+        return new GetSubmissionStatusResponse
+        {
+            SubmissionId = judgeResponse.SubmissionId,
+            Status = (Contracts.DTOs.Submission.Responses.SubmissionStatus)judgeResponse.Status,
+            SubmissionResult = judgeResponse.SubmissionResult != null 
+                ? new Contracts.DTOs.Submission.Responses.SubmissionResult
+                {
+                    ExecutionResultBase64 = judgeResponse.SubmissionResult.ExecutionResultBase64,
+                    ExecutionAccuracy = judgeResponse.SubmissionResult.ExecutionAccuracy,
+                    LastUpdated = judgeResponse.SubmissionResult.LastUpdated
+                }
+                : null,
+            ErrorCode = (Contracts.DTOs.Submission.Responses.SubmissionErrorCode)judgeResponse.ErrorCode,
+            ErrorDetails = judgeResponse.ErrorDetails,
+            Timestamp = judgeResponse.Timestamp,
+            SubmittedAt = submission.SubmittedAt,
+            LastUpdate = submission.LastUpdate
         };
     }
 }

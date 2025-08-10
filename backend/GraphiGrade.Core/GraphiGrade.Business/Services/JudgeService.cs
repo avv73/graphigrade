@@ -44,4 +44,20 @@ public class JudgeService : IJudgeService
             return null;
         }
     }
+
+    public async Task<JudgeBatchResponse?> GetSubmissionStatusAsync(string submissionId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var response = await _httpClient.GetAsync($"{_config.JudgeServiceUrl}/submissions/{submissionId}", cancellationToken);
+            
+            var responseJson = await response.Content.ReadAsStringAsync(cancellationToken);
+            return JsonSerializer.Deserialize<JudgeBatchResponse>(responseJson, _jsonOptions);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving submission status from judge service for submission {SubmissionId}", submissionId);
+            return null;
+        }
+    }
 }

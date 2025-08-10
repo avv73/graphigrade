@@ -3,6 +3,7 @@ using GraphiGrade.Business.ServiceModels;
 using GraphiGrade.Business.ServiceModels.Factories;
 using GraphiGrade.Business.ServiceModels.Judge;
 using GraphiGrade.Business.Services.Abstractions;
+using GraphiGrade.Business.Mappers.Abstractions;
 using GraphiGrade.Contracts.DTOs.Submission.Requests;
 using GraphiGrade.Contracts.DTOs.Submission.Responses;
 using GraphiGrade.Data.Models;
@@ -19,6 +20,7 @@ public class SubmissionService : ISubmissionService
     private readonly IJudgeService _judgeService;
     private readonly IBlobStorageService _blobStorageService;
     private readonly IUserResolverService _userResolverService;
+    private readonly ISubmissionMapper _submissionMapper;
     private readonly GraphiGradeConfig _config;
     private readonly ILogger<SubmissionService> _logger;
 
@@ -27,6 +29,7 @@ public class SubmissionService : ISubmissionService
         IJudgeService judgeService,
         IBlobStorageService blobStorageService,
         IUserResolverService userResolverService,
+        ISubmissionMapper submissionMapper,
         IOptions<GraphiGradeConfig> config,
         ILogger<SubmissionService> logger)
     {
@@ -34,6 +37,7 @@ public class SubmissionService : ISubmissionService
         _judgeService = judgeService;
         _blobStorageService = blobStorageService;
         _userResolverService = userResolverService;
+        _submissionMapper = submissionMapper;
         _config = config.Value;
         _logger = logger;
     }
@@ -201,6 +205,107 @@ public class SubmissionService : ISubmissionService
         };
 
         return ServiceResultFactory<SubmitSolutionResponse>.CreateResult(response);
+    }
+
+    public async Task<ServiceResult<GetSubmissionStatusResponse>> GetSubmissionStatusAsync(string submissionId, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(submissionId))
+        {
+            return ServiceResultFactory<GetSubmissionStatusResponse>.CreateError(
+                HttpStatusCode.BadRequest,
+                "Submission ID cannot be empty");
+        }
+
+        string username = _userResolverService.Username;
+
+        // Get user
+        User? user;
+        try
+        {
+            user = await _unitOfWork.Users.GetFirstByFilterAsync(u => u.Username == username);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error when retrieving user");
+            return ServiceResultFactory<GetSubmissionStatusResponse>.CreateError(
+                HttpStatusCode.InternalServerError,
+                "Unexpected error when fetching data, please try again later");
+        }
+
+        if (user == null)
+        {
+            _logger.LogError("Unable to find user for claim: {Username}", username);
+            return ServiceResultFactory<GetSubmissionStatusResponse>.CreateError(HttpStatusCode.Forbidden);
+        }
+
+        // Get submission from database
+        Submission? submission;
+        try
+        {
+            submission = await _unitOfWork.Submissions.GetFirstByFilterAsync(s => s.JudgeId == submissionId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error when retrieving submission");
+            return ServiceResultFactory<GetSubmissionStatusResponse>.CreateError(
+                HttpStatusCode.InternalServerError,
+                "Unexpected error when fetching data, please try again later");
+        }
+
+        if (submission == null)
+        {
+            return ServiceResultFactory<GetSubmissionStatusResponse>.CreateError(HttpStatusCode.NotFound);
+        }
+
+        // Check if user owns this submission
+        if (submission.UserId != user.Id && !user.IsTeacher)
+        {
+            return ServiceResultFactory<GetSubmissionStatusResponse>.CreateError(HttpStatusCode.Forbidden);
+        }
+
+        // Get status from judge service
+        JudgeBatchResponse? judgeResponse;
+        try
+        {
+            judgeResponse = await _judgeService.GetSubmissionStatusAsync(submissionId, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving submission status from judge service");
+            return ServiceResultFactory<GetSubmissionStatusResponse>.CreateError(
+                HttpStatusCode.InternalServerError,
+                "Unexpected error when retrieving submission status, please try again later");
+        }
+
+        if (judgeResponse == null)
+        {
+            return ServiceResultFactory<GetSubmissionStatusResponse>.CreateError(
+                HttpStatusCode.InternalServerError,
+                "Judge service is currently unavailable, please try again later");
+        }
+
+        // Update submission status if changed
+        if (submission.Status != (byte)judgeResponse.Status || submission.ErrorCode != (byte)judgeResponse.ErrorCode)
+        {
+            submission.Status = (byte)judgeResponse.Status;
+            submission.ErrorCode = (byte)judgeResponse.ErrorCode;
+            submission.LastUpdate = judgeResponse.Timestamp;
+
+            try
+            {
+                await _unitOfWork.SaveAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unable to update submission status in database");
+                // Continue processing even if database update fails
+            }
+        }
+
+        // Map to response
+        var response = _submissionMapper.MapToGetSubmissionStatusResponse(submission, judgeResponse);
+
+        return ServiceResultFactory<GetSubmissionStatusResponse>.CreateResult(response);
     }
 
     private async Task<string> GetBase64FromBlobUrl(string blobUrl)
