@@ -1,7 +1,6 @@
 ﻿using GraphiGrade.Data.Models;
 using GraphiGrade.Data.Repositories.Abstractions;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.Extensions.Logging;
 using System.Security.Claims;
 
 namespace GraphiGrade.Business.Authorization.Policies.UserBelongsToGroup;

@@ -14,6 +14,10 @@ public class GraphiGradeConfig : IValidatableObject
 
     public required string JwtAudience { get; set; }
 
+    public required int MaximumBytesSizeOfResultPattern { get; set; }
+
+    public long MaximumBase64CharsInResultPattern => (long)Math.Ceiling(MaximumBytesSizeOfResultPattern / 3.0) * 4;
+
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
         if (string.IsNullOrWhiteSpace(DbConnectionString))
@@ -39,6 +43,11 @@ public class GraphiGradeConfig : IValidatableObject
         if (string.IsNullOrWhiteSpace(JwtAudience))
         {
             yield return new ValidationResult($"'{nameof(JwtAudience)}' is missing from configuration!", new[] { nameof(JwtAudience) });
+        }
+
+        if (MaximumBytesSizeOfResultPattern <= 0)
+        {
+            yield return new ValidationResult($"'{nameof(MaximumBytesSizeOfResultPattern)}' is incorrectly configured!", new[] { nameof(MaximumBytesSizeOfResultPattern) });
         }
     }
 }

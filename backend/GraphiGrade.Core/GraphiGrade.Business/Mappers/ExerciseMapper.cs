@@ -1,5 +1,6 @@
 ﻿using GraphiGrade.Business.Mappers.Abstractions;
 using GraphiGrade.Contracts.DTOs.Common;
+using GraphiGrade.Contracts.DTOs.Exercise.Requests;
 using GraphiGrade.Contracts.DTOs.Exercise.Responses;
 using GraphiGrade.Data.Models;
 using Microsoft.AspNetCore.Http;
@@ -53,6 +54,37 @@ public class ExerciseMapper : IExerciseMapper
             CreatedByUser = createdByUser,
             ImageBlobUrl = imageBlobUrl,
             Submissions = submissions
+        };
+    }
+
+    public CreateExerciseResponse MapToCreateExerciseResponse(
+        Exercise exercise, 
+        string imageBlobUrl, 
+        CommonResourceDto createdByUser, 
+        IEnumerable<CommonResourceDto> submissions)
+    {
+
+        return new CreateExerciseResponse
+        {
+            Title = exercise.Title,
+            Description = exercise.Description ?? string.Empty,
+            CreatedAt = exercise.CreatedAt,
+            CreatedByUser = createdByUser,
+            ImageBlobUrl = imageBlobUrl,
+            Submissions = submissions
+        };
+    }
+
+    public Exercise MapFromCreateRequest(CreateExerciseRequest request, User author, FileMetadata fileMetadata)
+    {
+        return new Exercise
+        {
+            Title = request.Title,
+            Description = request.Description ?? string.Empty,
+            IsVisible = request.IsVisible,
+            CreatedBy = author,
+            CreatedAt = DateTime.UtcNow,
+            ExpectedImage = fileMetadata
         };
     }
 }

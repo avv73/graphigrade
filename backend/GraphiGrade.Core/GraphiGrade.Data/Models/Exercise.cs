@@ -2,7 +2,7 @@
 
 namespace GraphiGrade.Data.Models;
 
-public class Exercise
+public class  Exercise
 {
     public int Id { get; set; }
 
@@ -16,7 +16,7 @@ public class Exercise
     public int ExpectedImageId { get; set; }
     public int CreatedById { get; set; }
     public DateTime CreatedAt { get; set; }
-    public bool IsVisible { get; set; }
+    public bool IsVisible { get; set; } 
 
     public FileMetadata ExpectedImage { get; set; }
     public User CreatedBy { get; set; }
