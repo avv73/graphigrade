@@ -54,10 +54,10 @@ public class JudgeExecutorService : IJudgeExecutorService
             }
 
             // Capturing 
-            WinAPI.GetClientRect(mainHandle, out WinAPI.RECT rect);
+            WinAPI.GetWindowRect(mainHandle, out WinAPI.RECT rect);
 
             int width = rect.Right - rect.Left;
-            int height = rect.Bottom - rect.Top - 20; // TEMP!
+            int height = rect.Bottom - rect.Top;
 
             ImageDecorator resultImage = new ImageDecorator(width, height, PixelFormat.Format32bppArgb);
 
