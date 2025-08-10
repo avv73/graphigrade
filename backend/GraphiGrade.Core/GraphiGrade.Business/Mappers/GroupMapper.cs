@@ -1,5 +1,6 @@
 ﻿using GraphiGrade.Business.Mappers.Abstractions;
 using GraphiGrade.Contracts.DTOs.Common;
+using GraphiGrade.Contracts.DTOs.Group.Responses;
 using GraphiGrade.Contracts.DTOs.User.Responses;
 using GraphiGrade.Data.Models;
 using Microsoft.AspNetCore.Http;
@@ -49,6 +50,17 @@ public class GroupMapper : IGroupMapper
             Name = group.GroupName,
             MembersInGroup = groupUserList,
             AvailableExercises = groupExerciseList
+        };
+    }
+
+    public CreateGroupResponse MapToCreateGroupResponse(Group group, IEnumerable<CommonResourceDto> assignedUsers)
+    {
+        return new CreateGroupResponse
+        {
+            Id = group.Id,
+            GroupName = group.GroupName,
+            CreatedAt = DateTime.UtcNow,
+            AssignedUsers = assignedUsers
         };
     }
 }

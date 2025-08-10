@@ -398,3 +398,4 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+/backend/GraphiGrade.Core/GraphiGrade.Web/appsettings.Development.json

@@ -13,6 +13,7 @@ public class UnitOfWork : IUnitOfWork
     public IRepository<Exercise> Exercises { get; }
     public IRepository<Submission> Submissions { get; }
     public IRepository<FileMetadata> FilesMetadata { get; }
+    public IRepository<UsersGroups> UsersGroups { get; }
 
     public UnitOfWork(GraphiGradeDbContext dbContext)
     {
@@ -23,6 +24,7 @@ public class UnitOfWork : IUnitOfWork
         Exercises = new Repository<Exercise>(_dbContext);
         Submissions = new Repository<Submission>(_dbContext);
         FilesMetadata = new Repository<FileMetadata>(_dbContext);
+        UsersGroups = new Repository<UsersGroups>(_dbContext);
     }
 
     public async Task SaveAsync()
@@ -34,5 +36,4 @@ public class UnitOfWork : IUnitOfWork
     {
         _dbContext.Dispose();
     }
-
 }
