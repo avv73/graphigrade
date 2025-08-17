@@ -1,6 +1,6 @@
 ﻿namespace GraphiGrade.Judge.DTOs;
 
-public class JudgeSubmissionRequest
+public record JudgeSubmissionRequest
 {
     public string SourceCodeBase64 { get; set; }
 

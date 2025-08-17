@@ -116,6 +116,8 @@ public class JudgeRunnerService : IJudgeRunnerService
                     errorDetails: string.Empty,
                     accuracyScore,
                     overlappedResult?.ToBase64() ?? string.Empty);
+
+                _logger.LogInformation($"Finished judging for {tempContainer.SolutionCppFullPath}");
             }
         }
         catch (Exception ex)
