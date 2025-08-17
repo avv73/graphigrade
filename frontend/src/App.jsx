@@ -1,12 +1,14 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { Suspense, lazy } from 'react';
 import NavBar from './components/NavBar.jsx';
-import Welcome from './pages/Welcome.jsx';
-import Login from './pages/Login.jsx';
-import Register from './pages/Register.jsx';
-import StudentDashboard from './pages/StudentDashboard.jsx';
-import TeacherDashboard from './pages/TeacherDashboard.jsx';
 import ProtectedRoute from './routes/ProtectedRoute.jsx';
 import { useAuth } from './contexts/AuthContext.jsx';
+
+const Welcome = lazy(() => import('./pages/Welcome.jsx'));
+const Login = lazy(() => import('./pages/Login.jsx'));
+const Register = lazy(() => import('./pages/Register.jsx'));
+const StudentDashboard = lazy(() => import('./pages/StudentDashboard.jsx'));
+const TeacherDashboard = lazy(() => import('./pages/TeacherDashboard.jsx'));
 
 export default function App() {
   const { isAuthenticated, role } = useAuth();
@@ -15,7 +17,8 @@ export default function App() {
     <div>
       <NavBar />
       <div className="container gg-container mt-4">
-        <Routes>
+        <Suspense fallback={<div className="text-center my-4">Loading…</div>}>
+          <Routes>
           <Route path="/" element={isAuthenticated ? (
             role === 'Admin' ? <Navigate to="/teacher" /> : <Navigate to="/student" />
           ) : (
@@ -44,7 +47,8 @@ export default function App() {
           />
 
           <Route path="*" element={<Navigate to="/" />} />
-        </Routes>
+          </Routes>
+        </Suspense>
       </div>
     </div>
   );

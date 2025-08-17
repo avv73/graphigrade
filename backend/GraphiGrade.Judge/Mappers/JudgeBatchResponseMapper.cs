@@ -25,6 +25,7 @@ public class JudgeBatchResponseMapper : IJudgeBatchResponseMapper
             ErrorCode = submission.ErrorCode,
             ErrorDetails = submission.ErrorDetails,
             Status = submission.Status,
+            SourceCodeBase64 = submission.SourceCodeBase64,
             SubmissionResult = MapSubmissionResult(submission),
             Timestamp = DateTime.Now
         };

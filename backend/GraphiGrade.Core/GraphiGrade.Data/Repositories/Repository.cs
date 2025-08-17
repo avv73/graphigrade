@@ -86,4 +86,9 @@ public class Repository<T> : IRepository<T> where T : class
         query = includes(query);
         return await query.ToListAsync();
     }
+
+    public async Task<IEnumerable<T>> GetAllByFilterAsync(Expression<Func<T, bool>> predicate)
+    {
+        return await DbSet.Where(predicate).ToListAsync();
+    }
 }

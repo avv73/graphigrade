@@ -18,6 +18,9 @@ async function parseResponse(res) {
     try { data = JSON.parse(text); } catch { data = text; }
   }
   if (!res.ok) {
+    if (data.errors && data.errors["Password"]) { // dirty fix
+       throw new Error(data.errors["Password"])
+    }
     const message = (data && data.errorMessage) || data?.message || res.statusText || 'Request failed';
     throw new Error(message);
   }
@@ -113,6 +116,13 @@ export async function submitSolution(exerciseId, sourceCodeBase64) {
 export async function getSubmissionStatus(submissionId) {
   if (!submissionId) throw new Error('Submission id is required');
   return httpGet(`/api/Submission/${encodeURIComponent(submissionId)}`);
+}
+
+// GET /api/Submission/user/{username}
+export async function getUserSubmissions(username) {
+  if (!username) throw new Error('Username is required');
+  const res = await httpGet(`/api/Submission/user/${encodeURIComponent(username)}`);
+  return res?.submissions || [];
 }
 
 // POST /api/Group

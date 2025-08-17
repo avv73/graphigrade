@@ -41,7 +41,7 @@ public class UserController : ControllerBase
         }
 
         var adminCheck = await _authorizationService.AuthorizeAsync(User, Policy.Admin);
-        var memberCheck = await _authorizationService.AuthorizeAsync(User, Policy.SameUser);
+        var memberCheck = await _authorizationService.AuthorizeAsync(User, username, Policy.SameUser);
 
         if (!adminCheck.Succeeded && !memberCheck.Succeeded)
         {

@@ -7,5 +7,6 @@ namespace GraphiGrade.Business.Services.Abstractions;
 public interface ISubmissionService
 {
     Task<ServiceResult<SubmitSolutionResponse>> SubmitSolutionAsync(int exerciseId, SubmitSolutionRequest request, CancellationToken cancellationToken);
-    Task<ServiceResult<GetSubmissionStatusResponse>> GetSubmissionStatusAsync(string submissionId, CancellationToken cancellationToken);
+    Task<ServiceResult<GetSubmissionStatusResponse>> GetSubmissionStatusAsync(int submissionId, CancellationToken cancellationToken);
+    Task<ServiceResult<GetUserSubmissionsResponse>> GetUserSubmissionsAsync(string username, CancellationToken cancellationToken);
 }

@@ -8,6 +8,8 @@ public record JudgeBatchResponse
 
     public SubmissionStatus Status { get; set; }
 
+    public string SourceCodeBase64 { get; set; }
+
     public JudgeSubmissionResult? SubmissionResult { get; set; }
 
     public SubmissionErrorCode ErrorCode { get; set; }

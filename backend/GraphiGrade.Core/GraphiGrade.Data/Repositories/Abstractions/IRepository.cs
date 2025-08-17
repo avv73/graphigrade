@@ -18,4 +18,5 @@ public interface IRepository<T> where T : class
     Task SaveAsync();
     Task<IEnumerable<T>> GetAllAsync();
     Task<IEnumerable<T>> GetAllWithIncludesAsync(Func<IQueryable<T>, IIncludableQueryable<T, object>> includes);
+    Task<IEnumerable<T>> GetAllByFilterAsync(Expression<Func<T, bool>> predicate);
 }
