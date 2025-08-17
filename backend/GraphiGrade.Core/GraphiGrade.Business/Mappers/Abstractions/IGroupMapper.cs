@@ -7,7 +7,7 @@ namespace GraphiGrade.Business.Mappers.Abstractions;
 
 public interface IGroupMapper
 {
-    CommonResourceDto MapToUserGroupDto(Group group);
+    CommonResourceDto MapToCommonResourceDto(Group group);
 
     GetGroupResponse MapToGetGroupResponse(Group group, IEnumerable<CommonResourceDto> groupUserList, IEnumerable<CommonResourceDto> groupExerciseList);
     

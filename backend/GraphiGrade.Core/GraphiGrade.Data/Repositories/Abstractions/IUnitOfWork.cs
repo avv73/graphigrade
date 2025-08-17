@@ -10,5 +10,6 @@ public interface IUnitOfWork : IDisposable
     IRepository<Submission> Submissions { get; }
     IRepository<FileMetadata> FilesMetadata { get; }
     IRepository<UsersGroups> UsersGroups { get; }
+    IRepository<ExercisesGroups> ExercisesGroups { get; }
     Task SaveAsync();
 }

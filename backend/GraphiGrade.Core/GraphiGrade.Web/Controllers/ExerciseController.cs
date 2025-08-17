@@ -175,4 +175,52 @@ public class ExerciseController : ControllerBase
 
         return Ok(response.Result);
     }
+
+    [HttpPut]
+    [Route("{id}/assign/{group_id}")]
+    [ProducesResponseType(typeof(AssignExerciseToGroupResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status409Conflict)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> AssignExerciseToGroupAsync(int id, int group_id, CancellationToken cancellationToken)
+    {
+        if (id <= 0 || group_id <= 0)
+        {
+            return new ObjectResult(ErrorResponseFactory.CreateError(HttpStatusCode.BadRequest, "Invalid identifiers"))
+            {
+                StatusCode = (int)HttpStatusCode.BadRequest
+            };
+        }
+
+        var adminCheck = await _authorizationService.AuthorizeAsync(User, Policy.Admin);
+        if (!adminCheck.Succeeded)
+        {
+            return new ObjectResult(ErrorResponseFactory.CreateError(HttpStatusCode.Forbidden))
+            {
+                StatusCode = (int)HttpStatusCode.Forbidden
+            };
+        }
+
+        if (!_userResolverService.Resolve(User))
+        {
+            return new ObjectResult(ErrorResponseFactory.CreateError(HttpStatusCode.Forbidden))
+            {
+                StatusCode = (int)HttpStatusCode.Forbidden
+            };
+        }
+
+        var result = await _exerciseService.AssignExerciseToGroupAsync(id, group_id, cancellationToken);
+        if (result.IsError)
+        {
+            return new ObjectResult(result.Error)
+            {
+                StatusCode = (int)result.Error!.ErrorCode
+            };
+        }
+
+        return Ok(result.Result);
+    }
 }

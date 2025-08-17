@@ -19,7 +19,7 @@ public class GroupMapper : IGroupMapper
         _httpContextAccessor = httpContextAccessor;
     }
 
-    public CommonResourceDto MapToUserGroupDto(Group group)
+    public CommonResourceDto MapToCommonResourceDto(Group group)
     {
         if (_httpContextAccessor.HttpContext == null)
         {
@@ -28,7 +28,7 @@ public class GroupMapper : IGroupMapper
 
         string? linkToGroup = _linkGenerator.GetUriByAction(
             _httpContextAccessor.HttpContext,
-            action: "GetGroupByIdAsync",
+            action: "GetGroupById",
             controller: "Group",
             values: new { id = group.Id });
 

@@ -1,0 +1,16 @@
+:root {
+  --gg-primary: #0d6efd;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: #f7f8fa;
+}
+
+.gg-container {
+  max-width: 1100px;
+}

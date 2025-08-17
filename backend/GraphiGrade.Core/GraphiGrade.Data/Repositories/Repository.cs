@@ -74,4 +74,16 @@ public class Repository<T> : IRepository<T> where T : class
     {
         await DbContext.SaveChangesAsync();
     }
+
+    public async Task<IEnumerable<T>> GetAllAsync()
+    {
+        return await DbSet.ToListAsync();
+    }
+
+    public async Task<IEnumerable<T>> GetAllWithIncludesAsync(Func<IQueryable<T>, IIncludableQueryable<T, object>> includes)
+    {
+        IQueryable<T> query = DbSet.AsQueryable();
+        query = includes(query);
+        return await query.ToListAsync();
+    }
 }

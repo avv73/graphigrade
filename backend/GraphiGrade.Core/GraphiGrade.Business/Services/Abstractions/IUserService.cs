@@ -10,4 +10,5 @@ public interface IUserService
     Task<ServiceResult<RegisterResponse>> RegisterUserAsync(RegisterRequest registerRequest, CancellationToken cancellationToken);
     Task<ServiceResult<LoginResponse>> LoginUserAsync(LoginRequest loginRequest, CancellationToken cancellationToken);
     Task<ServiceResult<GetUserResponse>> GetUserByUsernameAsync(string username, CancellationToken cancellationToken);
+    Task<ServiceResult<GetAllStudentsResponse>> GetAllStudentsAsync(CancellationToken cancellationToken);
 }

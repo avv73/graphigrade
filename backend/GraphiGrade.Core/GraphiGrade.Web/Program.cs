@@ -26,6 +26,17 @@ public class Program
 
         builder.Services.AddHttpContextAccessor();
 
+        builder.Services.AddCors(options =>
+        {
+            options.AddDefaultPolicy(
+                policy =>
+                {
+                    policy.WithOrigins("http://localhost:5173");
+                    policy.WithHeaders("Origin", "X-Requested-With", "Content-Type", "Accept", "Authorization");
+                    policy.WithMethods("GET", "POST", "PUT", "DELETE", "OPTIONS");
+                });
+        });
+
         var app = builder.Build();
 
         if (app.Environment.IsDevelopment())
@@ -35,6 +46,8 @@ public class Program
         }
 
         app.UseHttpsRedirection();
+
+        app.UseCors();
 
         app.UseAuthentication();
 

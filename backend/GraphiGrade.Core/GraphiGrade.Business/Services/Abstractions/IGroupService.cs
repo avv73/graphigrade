@@ -10,4 +10,8 @@ public interface IGroupService
     Task<ServiceResult<GetGroupResponse>> GetGroupByIdAsync(int id, CancellationToken cancellationToken);
     
     Task<ServiceResult<CreateGroupResponse>> CreateGroupAsync(CreateGroupRequest request, CancellationToken cancellationToken);
+    
+    Task<ServiceResult<GetAllGroupsResponse>> GetAllGroupsAsync(CancellationToken cancellationToken);
+
+    Task<ServiceResult<UserAssignmentResponse>> AssignStudentToGroupAsync(int groupId, int studentId, CancellationToken cancellationToken);
 }

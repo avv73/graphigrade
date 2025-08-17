@@ -5,6 +5,7 @@ using GraphiGrade.Business.ServiceModels;
 using GraphiGrade.Business.ServiceModels.Factories;
 using GraphiGrade.Business.Services.Abstractions;
 using GraphiGrade.Contracts.DTOs;
+using GraphiGrade.Contracts.DTOs.Common;
 using GraphiGrade.Contracts.DTOs.Group.Requests;
 using GraphiGrade.Contracts.DTOs.Group.Responses;
 using GraphiGrade.Contracts.DTOs.User.Responses;
@@ -110,5 +111,74 @@ public class GroupController : ControllerBase
         }
 
         return Ok(response.Result);
+    }
+
+    [HttpGet]
+    [Route("all")]
+    [ProducesResponseType(typeof(GetAllGroupsResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType<ErrorResponse>(StatusCodes.Status401Unauthorized, "application/json")]
+    [ProducesResponseType<ErrorResponse>(StatusCodes.Status403Forbidden, "application/json")]
+    [ProducesResponseType<ErrorResponse>(StatusCodes.Status500InternalServerError, "application/json")]
+    public async Task<IActionResult> GetAllGroupsAsync(CancellationToken cancellationToken)
+    {
+        // Only admins can view all groups
+        var adminCheck = await _authorizationService.AuthorizeAsync(User, Policy.Admin);
+        if (!adminCheck.Succeeded)
+        {
+            return new ObjectResult(ErrorResponseFactory.CreateError(HttpStatusCode.Forbidden))
+            {
+                StatusCode = (int)HttpStatusCode.Forbidden
+            };
+        }
+
+        var response = await _groupService.GetAllGroupsAsync(cancellationToken);
+        if (response.IsError)
+        {
+            return new ObjectResult(response.Error)
+            {
+                StatusCode = (int)response.Error!.ErrorCode
+            };
+        }
+
+        return Ok(response.Result);
+    }
+
+    [HttpPut]
+    [Route("{id}/assign/{student_id}")]
+    [ProducesResponseType(typeof(UserAssignmentResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status409Conflict)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> AssignStudentToGroupAsync(int id, int student_id, CancellationToken cancellationToken)
+    {
+        if (id <= 0 || student_id <= 0)
+        {
+            return new ObjectResult(ErrorResponseFactory.CreateError(HttpStatusCode.BadRequest, "Invalid identifiers"))
+            {
+                StatusCode = (int)HttpStatusCode.BadRequest
+            };
+        }
+        var adminCheck = await _authorizationService.AuthorizeAsync(User, Policy.Admin);
+        if (!adminCheck.Succeeded)
+        {
+            return new ObjectResult(ErrorResponseFactory.CreateError(HttpStatusCode.Forbidden))
+            {
+                StatusCode = (int)HttpStatusCode.Forbidden
+            };
+        }
+
+        var result = await _groupService.AssignStudentToGroupAsync(id, student_id, cancellationToken);
+        if (result.IsError)
+        {
+            return new ObjectResult(result.Error)
+            {
+                StatusCode = (int)result.Error!.ErrorCode
+            };
+        }
+
+        return Ok(result.Result);
     }
 }
