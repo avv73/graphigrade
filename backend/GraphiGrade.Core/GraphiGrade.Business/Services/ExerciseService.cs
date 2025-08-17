@@ -10,6 +10,7 @@ using GraphiGrade.Data.Repositories.Abstractions;
 using Microsoft.Extensions.Logging;
 using System.Net;
 using GraphiGrade.Business.Configurations;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
 namespace GraphiGrade.Business.Services;
@@ -51,7 +52,11 @@ public class ExerciseService : IExerciseService
 
         try
         {
-            matchedExercise = await _unitOfWork.Exercises.GetByIdAsync(id);
+            matchedExercise = await _unitOfWork.Exercises.GetByIdWithIncludesAsync(id, query => 
+                query
+                    .Include(e => e.ExpectedImage)
+                    .Include(e => e.CreatedBy)
+                    .Include(e => e.Submissions));
         }
         catch (Exception ex)
         {
@@ -71,7 +76,9 @@ public class ExerciseService : IExerciseService
 
         string imageBlobUrl = matchedExercise.ExpectedImage.StorageUrl;
         CommonResourceDto createdByUser = _userMapper.MapToCommonResourceDto(matchedExercise.CreatedBy);
-        IEnumerable<CommonResourceDto> submissions = matchedExercise.Submissions.Select(_submissionMapper.MapToCommonResourceDto);
+        IEnumerable<CommonResourceDto> submissions = matchedExercise.Submissions
+            .Where(s => _userResolverService.IsAdmin || s.User.Username == _userResolverService.Username) 
+            .Select(_submissionMapper.MapToCommonResourceDto);
 
         return ServiceResultFactory<GetExerciseResponse>.CreateResult(
             _exerciseMapper.MapToGetExerciseResponse(matchedExercise, imageBlobUrl, createdByUser, submissions));

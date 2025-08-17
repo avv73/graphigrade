@@ -5,6 +5,8 @@ namespace GraphiGrade.Contracts.DTOs.Exercise.Responses;
 
 public record CreateExerciseResponse : IResponse
 {
+    public required int Id { get; set; }
+
     public required string Title { get; set; }
 
     public required string Description { get; set; }

@@ -66,6 +66,7 @@ public class ExerciseMapper : IExerciseMapper
 
         return new CreateExerciseResponse
         {
+            Id = exercise.Id,
             Title = exercise.Title,
             Description = exercise.Description ?? string.Empty,
             CreatedAt = exercise.CreatedAt,
