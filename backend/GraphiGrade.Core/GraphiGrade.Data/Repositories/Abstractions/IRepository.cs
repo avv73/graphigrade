@@ -16,4 +16,7 @@ public interface IRepository<T> where T : class
     void Update(T entity);
     void Delete(T entity);
     Task SaveAsync();
+    Task<IEnumerable<T>> GetAllAsync();
+    Task<IEnumerable<T>> GetAllWithIncludesAsync(Func<IQueryable<T>, IIncludableQueryable<T, object>> includes);
+    Task<IEnumerable<T>> GetAllByFilterAsync(Expression<Func<T, bool>> predicate);
 }

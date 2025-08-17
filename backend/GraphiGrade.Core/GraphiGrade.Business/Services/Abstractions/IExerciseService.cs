@@ -14,4 +14,9 @@ public interface IExerciseService
     Task<ServiceResult<CreateExerciseResponse>> CreateExerciseAsync(
         CreateExerciseRequest request,
         CancellationToken cancellationToken);
+
+    Task<ServiceResult<AssignExerciseToGroupResponse>> AssignExerciseToGroupAsync(
+        int exerciseId,
+        int groupId,
+        CancellationToken cancellationToken);
 }

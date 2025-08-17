@@ -21,6 +21,7 @@ public class ExerciseService : IExerciseService
     private readonly IExerciseMapper _exerciseMapper;
     private readonly IUserMapper _userMapper;
     private readonly ISubmissionMapper _submissionMapper;
+    private readonly IGroupMapper _groupMapper;
     private readonly IUserResolverService _userResolverService;
     private readonly GraphiGradeConfig _config;
     private readonly IBlobStorageService _blobStorageService;
@@ -34,7 +35,8 @@ public class ExerciseService : IExerciseService
         IUserResolverService userResolverService,
         IOptions<GraphiGradeConfig> config,
         IBlobStorageService blobStorageService,
-        ILogger<ExerciseService> logger)
+        ILogger<ExerciseService> logger,
+        IGroupMapper groupMapper)
     {
         _unitOfWork = unitOfWork;
         _exerciseMapper = exerciseMapper;
@@ -44,6 +46,7 @@ public class ExerciseService : IExerciseService
         _config = config.Value;
         _blobStorageService = blobStorageService;
         _logger = logger;
+        _groupMapper = groupMapper;
     }
 
     public async Task<ServiceResult<GetExerciseResponse>> GetExerciseByIdAsync(int id, CancellationToken cancellationToken)
@@ -192,7 +195,6 @@ public class ExerciseService : IExerciseService
         {
             _logger.LogError(exception: ex, "Unable to commit changes to DB!");
 
-
             return ServiceResultFactory<CreateExerciseResponse>.CreateError(
                 HttpStatusCode.InternalServerError,
                 "Unexpected error when uploading data, please try again later");
@@ -204,5 +206,56 @@ public class ExerciseService : IExerciseService
 
         return ServiceResultFactory<CreateExerciseResponse>.CreateResult(
             _exerciseMapper.MapToCreateExerciseResponse(exercise, blobUrl, createdByUser, submissions));
+    }
+
+    public async Task<ServiceResult<AssignExerciseToGroupResponse>> AssignExerciseToGroupAsync(
+        int exerciseId,
+        int groupId,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var exercise = await _unitOfWork.Exercises.GetByIdAsync(exerciseId);
+            if (exercise == null)
+            {
+                return ServiceResultFactory<AssignExerciseToGroupResponse>.CreateError(HttpStatusCode.NotFound, "Exercise not found");
+            }
+
+            var group = await _unitOfWork.Groups.GetByIdAsync(groupId);
+            if (group == null)
+            {
+                return ServiceResultFactory<AssignExerciseToGroupResponse>.CreateError(HttpStatusCode.NotFound, "Group not found");
+            }
+
+            var alreadyAssigned = await _unitOfWork.ExercisesGroups.ExistsAsync(eg => eg.ExerciseId == exerciseId && eg.GroupId == groupId);
+            if (alreadyAssigned)
+            {
+                return ServiceResultFactory<AssignExerciseToGroupResponse>.CreateError(HttpStatusCode.Conflict, "Exercise already assigned to group");
+            }
+
+            var relation = new ExercisesGroups
+            {
+                ExerciseId = exerciseId,
+                GroupId = groupId
+            };
+
+            await _unitOfWork.ExercisesGroups.AddAsync(relation);
+            await _unitOfWork.SaveAsync();
+
+            var response = new AssignExerciseToGroupResponse
+            {
+                Exercise = _exerciseMapper.MapToCommonResourceDto(exercise),
+                AssignedGroup = _groupMapper.MapToCommonResourceDto(group)
+            };
+
+            return ServiceResultFactory<AssignExerciseToGroupResponse>.CreateResult(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(exception: ex, "Error when assigning exercise to group");
+            return ServiceResultFactory<AssignExerciseToGroupResponse>.CreateError(
+                HttpStatusCode.InternalServerError,
+                "Unexpected error when assigning exercise to group, please try again later");
+        }
     }
 }

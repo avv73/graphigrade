@@ -6,6 +6,7 @@ public record GetSubmissionStatusResponse : IResponse
 {
     public required string SubmissionId { get; set; }
     public required SubmissionStatus Status { get; set; }
+    public required string SourceCodeBase64 { get; set; }
     public SubmissionResult? SubmissionResult { get; set; }
     public required SubmissionErrorCode ErrorCode { get; set; }
     public string? ErrorDetails { get; set; }

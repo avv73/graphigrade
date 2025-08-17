@@ -41,7 +41,7 @@ public class UserController : ControllerBase
         }
 
         var adminCheck = await _authorizationService.AuthorizeAsync(User, Policy.Admin);
-        var memberCheck = await _authorizationService.AuthorizeAsync(User, Policy.SameUser);
+        var memberCheck = await _authorizationService.AuthorizeAsync(User, username, Policy.SameUser);
 
         if (!adminCheck.Succeeded && !memberCheck.Succeeded)
         {
@@ -53,6 +53,35 @@ public class UserController : ControllerBase
 
         ServiceResult<GetUserResponse> response = await _userService.GetUserByUsernameAsync(username, cancellationToken);
 
+        if (response.IsError)
+        {
+            return new ObjectResult(response.Error)
+            {
+                StatusCode = (int)response.Error!.ErrorCode
+            };
+        }
+
+        return Ok(response.Result);
+    }
+
+    [HttpGet]
+    [Route("students")]
+    [ProducesResponseType<GetAllStudentsResponse>(StatusCodes.Status200OK, "application/json")]
+    [ProducesResponseType<ErrorResponse>(StatusCodes.Status401Unauthorized, "application/json")]
+    [ProducesResponseType<ErrorResponse>(StatusCodes.Status403Forbidden, "application/json")]
+    [ProducesResponseType<ErrorResponse>(StatusCodes.Status500InternalServerError, "application/json")]
+    public async Task<IActionResult> GetAllStudentsAsync(CancellationToken cancellationToken)
+    {
+        var adminCheck = await _authorizationService.AuthorizeAsync(User, Policy.Admin);
+        if (!adminCheck.Succeeded)
+        {
+            return new ObjectResult(ErrorResponseFactory.CreateError(HttpStatusCode.Forbidden))
+            {
+                StatusCode = (int)HttpStatusCode.Forbidden
+            };
+        }
+
+        var response = await _userService.GetAllStudentsAsync(cancellationToken);
         if (response.IsError)
         {
             return new ObjectResult(response.Error)

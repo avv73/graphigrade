@@ -11,6 +11,7 @@ using GraphiGrade.Data.Models;
 using GraphiGrade.Data.Repositories.Abstractions;
 using Microsoft.Extensions.Logging;
 using System.Net;
+using Microsoft.EntityFrameworkCore;
 
 namespace GraphiGrade.Business.Services;
 
@@ -22,6 +23,7 @@ public class UserService : IUserService
     private readonly IUserMapper _userMapper;
     private readonly IExerciseMapper _exerciseMapper;
     private readonly IGroupMapper _groupMapper;
+
     private readonly ILogger<UserService> _logger;
 
     public UserService(
@@ -112,7 +114,7 @@ public class UserService : IUserService
 
         if (matchedUser == null)
         {
-            return ServiceResultFactory<LoginResponse>.CreateError(HttpStatusCode.Unauthorized);
+            return ServiceResultFactory<LoginResponse>.CreateError(HttpStatusCode.Unauthorized, "Wrong username or password");
         }
 
         if (_passwordHasher.CompareHashedPassword(matchedUser.Password, loginRequest.Password))
@@ -124,7 +126,7 @@ public class UserService : IUserService
             });
         }
 
-        return ServiceResultFactory<LoginResponse>.CreateError(HttpStatusCode.Unauthorized);
+        return ServiceResultFactory<LoginResponse>.CreateError(HttpStatusCode.Unauthorized, "Wrong username or password");
     }
 
     public async Task<ServiceResult<GetUserResponse>> GetUserByUsernameAsync(string username, CancellationToken cancellationToken)
@@ -133,7 +135,13 @@ public class UserService : IUserService
 
         try
         {
-            matchedUser = await _unitOfWork.Users.GetFirstByFilterAsync(u => u.Username == username);
+            matchedUser = await _unitOfWork.Users.GetFirstByFilterWithIncludesAsync(u => u.Username == username,
+                query =>
+                    query
+                        .Include(g => g.UsersGroups)
+                            .ThenInclude(ug => ug.Group)
+                            .ThenInclude(g => g.ExercisesGroups)
+                            .ThenInclude(eg => eg.Exercise));
         }
         catch (Exception ex)
         {
@@ -156,7 +164,7 @@ public class UserService : IUserService
         {
             foreach (UsersGroups userUsersGroup in matchedUser.UsersGroups)
             {
-                mappedUserGroupsForUser.Add(_groupMapper.MapToUserGroupDto(userUsersGroup.Group));
+                mappedUserGroupsForUser.Add(_groupMapper.MapToCommonResourceDto(userUsersGroup.Group));
 
                 if (userUsersGroup.Group.ExercisesGroups != null)
                 {
@@ -167,5 +175,39 @@ public class UserService : IUserService
         }
 
         return ServiceResultFactory<GetUserResponse>.CreateResult(_userMapper.MapToGetUserResponse(matchedUser, mappedUserExercisesForUser, mappedUserGroupsForUser));
+    }
+
+    public async Task<ServiceResult<GetAllStudentsResponse>> GetAllStudentsAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var users = await _unitOfWork.Users.GetAllWithIncludesAsync(query =>
+                query.Include(u => u.UsersGroups)
+                     .ThenInclude(ug => ug.Group));
+
+            var studentDtos = users
+                .Where(u => !u.IsTeacher)
+                .Select(u => new StudentWithGroupsDto
+                {
+                    Username = u.Username,
+                    Id = u.Id,
+                    Groups = (u.UsersGroups ?? new List<UsersGroups>())
+                        .Select(ug => _groupMapper.MapToCommonResourceDto(ug.Group))
+                        .ToList()
+                })
+                .ToList();
+
+            return ServiceResultFactory<GetAllStudentsResponse>.CreateResult(new GetAllStudentsResponse
+            {
+                Users = studentDtos
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error when retrieving all student users");
+            return ServiceResultFactory<GetAllStudentsResponse>.CreateError(
+                HttpStatusCode.InternalServerError,
+                "Unexpected error when fetching data, please try again later");
+        }
     }
 }

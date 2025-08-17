@@ -131,6 +131,85 @@ public class GroupService : IGroupService
         }
     }
 
+    public async Task<ServiceResult<GetAllGroupsResponse>> GetAllGroupsAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var groups = await _unitOfWork.Groups.GetAllAsync();
+
+            var result = new List<CommonResourceDto>();
+            foreach (var group in groups)
+            {
+                result.Add(_groupMapper.MapToCommonResourceDto(group));
+            }
+
+            return ServiceResultFactory<GetAllGroupsResponse>.CreateResult(new GetAllGroupsResponse { Groups = result });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(exception: ex, "Error when retrieving all groups!");
+            return ServiceResultFactory<GetAllGroupsResponse>.CreateError(
+                HttpStatusCode.InternalServerError,
+                "Unexpected error when fetching data, please try again later");
+        }
+    }
+
+    public async Task<ServiceResult<UserAssignmentResponse>> AssignStudentToGroupAsync(int groupId, int studentId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            // Validate group exists
+            var groupExists = await _unitOfWork.Groups.ExistsAsync(g => g.Id == groupId);
+            if (!groupExists)
+            {
+                return ServiceResultFactory<UserAssignmentResponse>.CreateError(HttpStatusCode.NotFound, "Group not found");
+            }
+
+            // Validate user exists
+            var user = await _unitOfWork.Users.GetByIdAsync(studentId);
+            if (user == null)
+            {
+                return ServiceResultFactory<UserAssignmentResponse>.CreateError(HttpStatusCode.NotFound, "User not found");
+            }
+
+            // Verify the user is a student (not a teacher)
+            if (user.IsTeacher)
+            {
+                return ServiceResultFactory<UserAssignmentResponse>.CreateError(HttpStatusCode.BadRequest, "Only students can be assigned to groups");
+            }
+
+            // Check if already assigned
+            var alreadyAssigned = await _unitOfWork.UsersGroups.ExistsAsync(ug => ug.GroupId == groupId && ug.UserId == studentId);
+            if (alreadyAssigned)
+            {
+                return ServiceResultFactory<UserAssignmentResponse>.CreateError(HttpStatusCode.Conflict, "User is already assigned to this group");
+            }
+
+            // Create relation
+            var userGroup = new UsersGroups
+            {
+                GroupId = groupId,
+                UserId = studentId
+            };
+
+            await _unitOfWork.UsersGroups.AddAsync(userGroup);
+            await _unitOfWork.SaveAsync();
+
+            var response = new UserAssignmentResponse
+            {
+                AssignedUsers = new List<CommonResourceDto> { _userMapper.MapToCommonResourceDto(user) },
+                Errors = Array.Empty<string>()
+            };
+
+            return ServiceResultFactory<UserAssignmentResponse>.CreateResult(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error assigning student {StudentId} to group {GroupId}", studentId, groupId);
+            return ServiceResultFactory<UserAssignmentResponse>.CreateError(HttpStatusCode.InternalServerError, "Unexpected error when assigning student to group");
+        }
+    }
+
     private async Task<ServiceResult<UserAssignmentResponse>> ValidateAndAssignUsersToGroup(
         int groupId, 
         IEnumerable<int> userIds, 

@@ -1,0 +1,26 @@
+{
+  "name": "graphigrade-frontend",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview --open"
+  },
+  "dependencies": {
+  "@codemirror/lang-cpp": "^6.0.2",
+  "@uiw/react-codemirror": "^4.23.7",
+    "bootstrap": "^5.3.3",
+    "jwt-decode": "^4.0.0",
+  "prismjs": "^1.29.0",
+  "react-simple-code-editor": "^0.13.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.26.2"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.1",
+    "vite": "^5.4.2"
+  }
+}

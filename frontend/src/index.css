@@ -1,0 +1,77 @@
+:root {
+  --gg-primary: #0d6efd;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: #f7f8fa;
+}
+
+.gg-container {
+  max-width: 1100px;
+}
+
+/* Larger exercise thumbnails */
+.gg-thumb {
+  max-height: 500px;
+  max-width: 100%;
+  height: auto;
+  width: auto;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+/* Small thumbnails for tabs */
+.gg-thumb-sm {
+  max-height: 48px;
+  max-width: 100px;
+  height: auto;
+  width: auto;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+/* Full-size image display (responsive container but no artificial shrink besides container width) */
+.gg-image-full {
+  max-width: 100%;
+  height: auto;
+  display: inline-block;
+}
+
+/* Image background utilities for transparent/white PNG visibility */
+.gg-img-bg-none {
+  background: transparent;
+}
+.gg-img-bg-dark {
+  background: #1e1e1e;
+}
+/* checker variant removed */
+
+/* Better indication for interactive submission rows */
+.gg-submission-row {
+  cursor: pointer;
+  transition: background-color 120ms ease, box-shadow 120ms ease;
+}
+.gg-submission-row:hover {
+  background-color: rgba(13, 110, 253, 0.06); /* soft primary tint */
+}
+.gg-submission-row:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px rgba(13, 110, 253, 0.4);
+}
+
+/* Clickable list-group rows */
+.gg-clickable {
+  cursor: pointer;
+  transition: background-color 120ms ease, box-shadow 120ms ease, transform 60ms ease;
+}
+.gg-clickable:hover {
+  background-color: rgba(13, 110, 253, 0.06);
+}
+.gg-clickable:active {
+  transform: translateY(1px);
+}

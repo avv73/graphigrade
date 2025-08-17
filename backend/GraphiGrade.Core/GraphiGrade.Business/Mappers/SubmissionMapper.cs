@@ -46,6 +46,7 @@ public class SubmissionMapper : ISubmissionMapper
         {
             SubmissionId = judgeResponse.SubmissionId,
             Status = (Contracts.DTOs.Submission.Responses.SubmissionStatus)judgeResponse.Status,
+            SourceCodeBase64 = judgeResponse.SourceCodeBase64,
             SubmissionResult = judgeResponse.SubmissionResult != null 
                 ? new Contracts.DTOs.Submission.Responses.SubmissionResult
                 {

@@ -210,15 +210,8 @@ public class SubmissionService : ISubmissionService
         return ServiceResultFactory<SubmitSolutionResponse>.CreateResult(response);
     }
 
-    public async Task<ServiceResult<GetSubmissionStatusResponse>> GetSubmissionStatusAsync(string submissionId, CancellationToken cancellationToken)
+    public async Task<ServiceResult<GetSubmissionStatusResponse>> GetSubmissionStatusAsync(int submissionId, CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(submissionId))
-        {
-            return ServiceResultFactory<GetSubmissionStatusResponse>.CreateError(
-                HttpStatusCode.BadRequest,
-                "Submission ID cannot be empty");
-        }
-
         string username = _userResolverService.Username;
 
         // Get user
@@ -245,7 +238,7 @@ public class SubmissionService : ISubmissionService
         Submission? submission;
         try
         {
-            submission = await _unitOfWork.Submissions.GetFirstByFilterAsync(s => s.JudgeId == submissionId);
+            submission = await _unitOfWork.Submissions.GetByIdAsync(submissionId);
         }
         catch (Exception ex)
         {
@@ -270,7 +263,7 @@ public class SubmissionService : ISubmissionService
         JudgeBatchResponse? judgeResponse;
         try
         {
-            judgeResponse = await _judgeService.GetSubmissionStatusAsync(submissionId, cancellationToken);
+            judgeResponse = await _judgeService.GetSubmissionStatusAsync(submission.JudgeId, cancellationToken);
         }
         catch (Exception ex)
         {
@@ -309,6 +302,106 @@ public class SubmissionService : ISubmissionService
         var response = _submissionMapper.MapToGetSubmissionStatusResponse(submission, judgeResponse);
 
         return ServiceResultFactory<GetSubmissionStatusResponse>.CreateResult(response);
+    }
+
+    public async Task<ServiceResult<GetUserSubmissionsResponse>> GetUserSubmissionsAsync(string username, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var user = await _unitOfWork.Users.GetFirstByFilterAsync(u => u.Username == username);
+            if (user == null)
+            {
+                return ServiceResultFactory<GetUserSubmissionsResponse>.CreateError(HttpStatusCode.NotFound, "User not found");
+            }
+
+            var submissions = (await _unitOfWork.Submissions.GetAllByFilterAsync(s => s.UserId == user.Id))
+                .OrderByDescending(s => s.SubmittedAt)
+                .ToList();
+
+            bool changed = false;
+            foreach (var s in submissions)
+            {
+                try
+                {
+                    var judge = await _judgeService.GetSubmissionStatusAsync(s.JudgeId, cancellationToken);
+                    if (judge == null)
+                    {
+                        continue; // skip if judge service unavailable for this item
+                    }
+
+                    byte newStatus = (byte)judge.Status;
+                    byte newError = (byte)judge.ErrorCode;
+                    DateTime newTimestamp = judge.Timestamp;
+
+                    if (s.Status != newStatus)
+                    {
+                        s.Status = newStatus;
+                        changed = true;
+                    }
+
+                    if (s.ErrorCode != newError)
+                    {
+                        s.ErrorCode = newError;
+                        changed = true;
+                    }
+
+                    if (s.LastUpdate != newTimestamp)
+                    {
+                        s.LastUpdate = newTimestamp;
+                        changed = true;
+                    }
+
+                    if (judge.SubmissionResult != null)
+                    {
+                        decimal newScore = Convert.ToDecimal(judge.SubmissionResult.ExecutionAccuracy);
+                        decimal roundedNewScore = Math.Round(newScore, 5, MidpointRounding.AwayFromZero);
+                        if (!s.Score.HasValue || Math.Round(s.Score.Value, 5, MidpointRounding.AwayFromZero) != roundedNewScore)
+                        {
+                            s.Score = roundedNewScore;
+                            changed = true;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to sync submission {SubmissionId} with judge service", s.JudgeId);
+                }
+            }
+
+            if (changed)
+            {
+                try
+                {
+                    await _unitOfWork.SaveAsync();
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Unable to persist submission updates during user submissions sync");
+                }
+            }
+
+            var dtos = submissions
+                .Select(s => new GetUserSubmissionDto
+                {
+                    Id = s.Id,
+                    SubmittedAt = s.SubmittedAt,
+                    Score = s.Score,
+                    Status = (Contracts.DTOs.Submission.Responses.SubmissionStatus)s.Status
+                })
+                .ToList();
+
+            return ServiceResultFactory<GetUserSubmissionsResponse>.CreateResult(new GetUserSubmissionsResponse
+            {
+                Submissions = dtos
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error when retrieving submissions for user {Username}", username);
+            return ServiceResultFactory<GetUserSubmissionsResponse>.CreateError(
+                HttpStatusCode.InternalServerError,
+                "Unexpected error when fetching data, please try again later");
+        }
     }
 
     private async Task<string> GetBase64FromBlobUrl(string blobUrl)
